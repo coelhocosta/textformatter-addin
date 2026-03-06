@@ -21,6 +21,7 @@ button { display:block; width:100%; padding:10px; margin-bottom:8px; font-size:1
 <button class="b2" id="b2">❝ Formatar Citação (seleção)</button>
 <button class="b3" id="b3">A Helvetica Neue 12pt</button>
 <button class="b4" id="b4">🔍 Marcar Espaços Excedentes</button>
+<button class="b6" id="b6">☰ Justificar Texto</button>
 <button class="b5" id="b5">✕ Remover Marcações</button>
 
 <div id="log">Pronto.</div>
@@ -171,8 +172,18 @@ document.getElementById('b4').onclick = function() {
                       ctx.load(find, 'items');
                       return ctx.sync().then(function() {
                         if (find.items.length) {
-                          find.items[find.items.length - 1].font.color = '#CC0000';
-                          find.items[find.items.length - 1].font.bold  = true;
+                          // Colore anchor+bangs, depois busca só os ! e colore vermelho
+                          // sem negritar o anchor
+                          var bangSearch = p.search(tgt.bangs, { matchCase: true, matchWholeWord: false });
+                          ctx.load(bangSearch, 'items');
+                          return ctx.sync().then(function() {
+                            for (var bi = 0; bi < bangSearch.items.length; bi++) {
+                              bangSearch.items[bi].font.color = '#CC0000';
+                              bangSearch.items[bi].font.bold  = false;
+                            }
+                            marked++;
+                            return ctx.sync().then(nextTarget);
+                          });
                         }
                         marked++;
                         return ctx.sync().then(nextTarget);
@@ -191,8 +202,26 @@ document.getElementById('b4').onclick = function() {
   }).catch(function(e) { log('ERRO: ' + e.message); });
 };
 
+document.getElementById('b6').onclick = function() {
+  Word.run(function(ctx) {
+    var sel = ctx.document.getSelection();
+    ctx.load(sel, 'text');
+    return ctx.sync().then(function() {
+      var ps = (sel.text && sel.text.trim()) ? sel.paragraphs : ctx.document.body.paragraphs;
+      ctx.load(ps, 'items');
+      return ctx.sync().then(function() {
+        for (var i = 0; i < ps.items.length; i++)
+          ps.items[i].alignment = Word.Alignment.justified;
+        return ctx.sync();
+      });
+    });
+  }).then(function() { log('OK: Texto justificado!'); })
+  .catch(function(e) { log('ERRO: ' + e.message); });
+};
+
 document.getElementById('b5').onclick = function() {
   Word.run(function(ctx) {
+    // Busca todos os ! no documento
     var found = ctx.document.body.search('!', { matchWildcards: false });
     ctx.load(found, 'items');
     return ctx.sync().then(function() {
@@ -200,7 +229,11 @@ document.getElementById('b5').onclick = function() {
       return ctx.sync().then(function() {
         for (var i = 0; i < found.items.length; i++) {
           var c = (found.items[i].font.color || '').replace('#','').toUpperCase();
-          if (c === 'CC0000') found.items[i].insertText('', Word.InsertLocation.replace);
+          if (c === 'CC0000') {
+            // Remove o ! E restaura bold=false para não deixar resíduo
+            found.items[i].font.bold = false;
+            found.items[i].insertText('', Word.InsertLocation.replace);
+          }
         }
         return ctx.sync();
       });
