@@ -21,6 +21,7 @@ button:last-child { margin-bottom: 0; }
 .b3 { background: #2ecc71; color: #333; }
 .b4 { background: #666; color: white; }
 .b5 { background: #e8a020; color: white; }
+.b6 { background: #0077b6; color: white; }
 button:hover { opacity: 0.88; }
 input {
   width: 100%; padding: 7px 8px; margin-bottom: 6px;
@@ -90,6 +91,7 @@ input:focus { outline: none; border-color: #4a4ae8; }
   <button class="b1" id="btnPara">¶  Parágrafos — 1,25cm · Esp. 1,5</button>
   <button class="b2" id="btnCit">❝  Citações — Recuo 1cm · Simples</button>
   <button class="b3" id="btnFont">A  Helvetica Neue 12pt</button>
+  <button class="b6" id="btnJust">☰  Justificar Texto</button>
 </div>
 
 <!-- ANÁLISE DE LINHAS -->
@@ -153,6 +155,7 @@ Office.initialize = function() {
   document.getElementById('btnPara').onclick    = doPara;
   document.getElementById('btnCit').onclick     = doCit;
   document.getElementById('btnFont').onclick    = doFont;
+  document.getElementById('btnJust').onclick    = doJust;
   document.getElementById('btnAnalyze').onclick = doAnalyze;
   document.getElementById('btnClean').onclick   = doClean;
   document.getElementById('btnSyn').onclick     = doSyn;
@@ -192,6 +195,39 @@ function doFont() {
   }).then(function() {
     msg('✓ Fonte: Helvetica Neue 12pt aplicada!');
   }).catch(function(e) { msg('Erro fonte: ' + e.message, true); });
+}
+
+// ── JUSTIFICAR ──
+function doJust() {
+  Word.run(function(ctx) {
+    var sel = ctx.document.getSelection();
+    ctx.load(sel, 'text');
+    return ctx.sync().then(function() {
+      if (sel.text && sel.text.trim()) {
+        // Justifica apenas a seleção
+        var paras = sel.paragraphs;
+        ctx.load(paras, 'items');
+        return ctx.sync().then(function() {
+          for (var i = 0; i < paras.items.length; i++) {
+            paras.items[i].alignment = Word.Alignment.justified;
+          }
+          return ctx.sync();
+        });
+      } else {
+        // Sem seleção: justifica o documento inteiro
+        var paras = ctx.document.body.paragraphs;
+        ctx.load(paras, 'items');
+        return ctx.sync().then(function() {
+          for (var i = 0; i < paras.items.length; i++) {
+            paras.items[i].alignment = Word.Alignment.justified;
+          }
+          return ctx.sync();
+        });
+      }
+    });
+  }).then(function() {
+    msg('✓ Texto justificado!');
+  }).catch(function(e) { msg('Erro: ' + e.message, true); });
 }
 
 // ── PARÁGRAFO ──
