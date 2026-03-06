@@ -1,277 +1,253 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>TextFormatter Pro</title>
-<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+<meta charset="UTF-8">
+<title>TextFormatter</title>
+<script src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js" type="text/javascript"></script>
 <style>
-:root{--bg:#0f0f13;--s2:#22222e;--bd:#2e2e3e;--ac:#6c63ff;--ac2:#ff6b6b;--ac3:#43e97b;--tx:#e8e8f0;--mt:#7a7a9a}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px}
-.hdr{background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:14px;border-bottom:1px solid var(--bd)}
-.hdr h1{font-size:15px;font-weight:700;background:linear-gradient(90deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hdr p{font-size:10px;color:var(--mt);margin-top:2px}
-.sec{padding:10px 14px;border-bottom:1px solid var(--bd)}
-.st{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mt);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.st::after{content:'';flex:1;height:1px;background:var(--bd)}
-.btn{width:100%;padding:9px 12px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;margin-bottom:6px;transition:transform .15s}
-.bp{background:linear-gradient(135deg,#6c63ff,#5a52d5);color:#fff;box-shadow:0 3px 12px rgba(108,99,255,.3)}
-.br{background:linear-gradient(135deg,#ff6b6b,#ee5a5a);color:#fff;box-shadow:0 3px 12px rgba(255,107,107,.3)}
-.bo{background:linear-gradient(135deg,#43e97b,#38d66e);color:#0f0f13;box-shadow:0 3px 12px rgba(67,233,123,.3)}
-.bx{background:var(--s2);color:var(--tx);border:1px solid var(--bd)}
-.bp:hover,.br:hover,.bo:hover,.bx:hover{transform:translateY(-1px)}
-.ifield{width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:12px;padding:8px 10px;outline:none;margin-bottom:6px;font-family:inherit}
-.ifield:focus{border-color:var(--ac)}
-.row{display:flex;gap:6px;margin-bottom:6px}
-.row .ifield{margin-bottom:0}
-.bsm{width:auto;padding:8px 12px;margin:0;white-space:nowrap}
-.tags{display:flex;flex-wrap:wrap;gap:5px;min-height:24px;margin-top:4px}
-.tag{background:var(--s2);border:1px solid var(--bd);border-radius:20px;padding:3px 10px;font-size:11px;cursor:pointer;transition:all .15s}
-.tag:hover,.tag.on{background:var(--ac);border-color:var(--ac);color:#fff}
-.toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:9px 16px;font-size:12px;z-index:9999;transition:transform .25s;box-shadow:0 8px 32px rgba(0,0,0,.4)}
-.toast.show{transform:translateX(-50%) translateY(0)}
-.tok{border-color:var(--ac3)}.ter{border-color:var(--ac2)}.tin{border-color:var(--ac)}
-.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--bd);border-top-color:var(--ac);border-radius:50%;animation:sp .7s linear infinite}
-@keyframes sp{to{transform:rotate(360deg)}}
-.lbl{font-size:11px;color:var(--mt);margin-bottom:5px}
-.lbl span{color:#a78bfa;font-weight:600}
+body { font-family: Arial, sans-serif; font-size: 14px; padding: 10px; background: #f5f5f5; }
+h2 { font-size: 16px; margin-bottom: 12px; color: #333; }
+button {
+  display: block; width: 100%; padding: 10px;
+  margin-bottom: 8px; font-size: 13px; font-weight: bold;
+  border: none; border-radius: 6px; cursor: pointer;
+}
+.b1 { background: #4a4ae8; color: white; }
+.b2 { background: #e84a4a; color: white; }
+.b3 { background: #2ecc71; color: #333; }
+.b4 { background: #888; color: white; }
+hr { margin: 12px 0; border: none; border-top: 1px solid #ccc; }
+input {
+  width: 100%; padding: 7px; margin-bottom: 6px;
+  border: 1px solid #ccc; border-radius: 4px; font-size: 13px;
+  box-sizing: border-box;
+}
+.tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.tag {
+  background: #e0e0ff; border: 1px solid #aaa;
+  border-radius: 12px; padding: 3px 10px;
+  font-size: 12px; cursor: pointer;
+}
+.tag:hover { background: #4a4ae8; color: white; }
+#status {
+  margin-top: 8px; padding: 8px; border-radius: 4px;
+  font-size: 12px; display: none;
+}
+.ok  { background: #d4edda; color: #155724; }
+.err { background: #f8d7da; color: #721c24; }
 </style>
 </head>
 <body>
 
-<div class="hdr">
-  <h1>✦ TextFormatter Pro</h1>
-  <p>Formatação ABNT · Sinônimos · Word for Mac</p>
+<h2>TextFormatter Pro</h2>
+
+<button class="b1" id="btnPara">¶ Formatar Parágrafo</button>
+<button class="b2" id="btnCit">❝ Formatar Citação</button>
+<button class="b3" id="btnFont">A Helvetica Neue 12pt</button>
+
+<hr>
+
+<div>
+  <strong style="font-size:12px">SINÔNIMOS</strong><br><br>
+  <input type="text" id="synWord" placeholder="Digite uma palavra...">
+  <button class="b1" id="btnSyn">Buscar Sinônimos</button>
+  <div class="tags" id="synTags"></div>
 </div>
 
-<div class="sec">
-  <div class="st">Formatação</div>
-  <button class="btn bp" onclick="fmtPara()">¶ &nbsp;Parágrafos (1,25cm · Esp. 1,5)</button>
-  <button class="btn br" onclick="fmtCit()">❝ &nbsp;Citações (Recuo 1cm · Simples)</button>
-  <button class="btn bo" onclick="fmtFont()">A &nbsp;Helvetica Neue 12pt</button>
+<hr>
+
+<div>
+  <strong style="font-size:12px">SUBSTITUIR</strong><br><br>
+  <input type="text" id="repOld" placeholder="Palavra original">
+  <input type="text" id="repNew" placeholder="Substituir por">
+  <button class="b4" id="btnRep">↔ Substituir</button>
 </div>
 
-<div class="sec">
-  <div class="st">Sinônimos</div>
-  <div class="lbl">Selecionado: <span id="sw">—</span></div>
-  <div class="row">
-    <input class="ifield" id="si" placeholder="Digite ou selecione uma palavra..."/>
-    <button class="btn bp bsm" onclick="getSyn()">Buscar</button>
-  </div>
-  <div id="sl" style="display:none;font-size:11px;color:var(--mt);padding:4px 0">
-    <span class="spin"></span> Buscando...
-  </div>
-  <div class="tags" id="st2"><span style="color:var(--mt);font-size:11px">Sinônimos aqui...</span></div>
-</div>
-
-<div class="sec">
-  <div class="st">Substituir</div>
-  <div class="row">
-    <input class="ifield" id="ro" placeholder="Palavra original"/>
-    <input class="ifield" id="rn" placeholder="Substituir por"/>
-  </div>
-  <button class="btn bx" onclick="doRep()">↔ &nbsp;Substituir</button>
-</div>
-
-<div class="toast" id="toast"></div>
+<div id="status"></div>
 
 <script>
-Office.onReady(function(info){
-  if(info.host === Office.HostType.Word){
-    setInterval(detSel, 2000);
-  }
-});
+var isReady = false;
 
-// ── toast ──
-var _tt;
-function toast(msg, cls){
-  var el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast show ' + (cls||'tin');
-  clearTimeout(_tt);
-  _tt = setTimeout(function(){ el.classList.remove('show'); }, 3000);
+Office.initialize = function() {
+  isReady = true;
+  document.getElementById('btnPara').onclick = doPara;
+  document.getElementById('btnCit').doCit;
+  document.getElementById('btnFont').onclick = doFont;
+  document.getElementById('btnSyn').onclick = doSyn;
+  document.getElementById('btnRep').onclick = doRep;
+  document.getElementById('btnCit').onclick = doCit;
+};
+
+function msg(text, isErr) {
+  var el = document.getElementById('status');
+  el.textContent = text;
+  el.className = isErr ? 'err' : 'ok';
+  el.style.display = 'block';
+  setTimeout(function() { el.style.display = 'none'; }, 4000);
 }
 
-// ── detecta seleção ──
-function detSel(){
-  Word.run(function(ctx){
-    var s = ctx.document.getSelection();
-    s.load('text');
-    return ctx.sync().then(function(){
-      var t = s.text.trim();
-      if(t && t.split(' ').length <= 5 && t.length < 80){
-        document.getElementById('sw').textContent = t;
-        document.getElementById('si').value = t;
-      }
-    });
-  }).catch(function(){});
-}
-
-// ── fonte ──
-function fmtFont(){
-  Word.run(function(ctx){
-    ctx.document.body.font.name = 'Helvetica Neue';
-    ctx.document.body.font.size = 12;
-    return ctx.sync();
-  }).then(function(){
-    toast('✓ Fonte aplicada!','tok');
-  }).catch(function(e){
-    toast('Erro: ' + e.message,'ter');
+// ── FONTE ──
+function doFont() {
+  Word.run(function(context) {
+    var body = context.document.body;
+    body.font.name = 'Helvetica Neue';
+    body.font.size = 12;
+    return context.sync();
+  }).then(function() {
+    msg('Fonte aplicada: Helvetica Neue 12pt');
+  }).catch(function(e) {
+    msg('Erro: ' + e.message, true);
   });
 }
 
-// ── parágrafos ──
-// recuo 1ª linha 1,25cm = 35.43pt
-// espaçamento 1,5 = lineSpacing 18pt
-// esquerda/direita = 0
-// antes/depois = 0
-// justificado
-function fmtPara(){
-  Word.run(function(ctx){
-    var paras = ctx.document.body.paragraphs;
-    paras.load('items');
-    return ctx.sync().then(function(){
-      for(var i=0; i<paras.items.length; i++){
-        var p = paras.items[i];
-        p.alignment       = Word.Alignment.justified;
+// ── PARÁGRAFO ──
+// Primeira linha: 1,25cm = 35.43pt
+// Espaçamento: 1,5 linhas = lineSpacing 18
+// Antes/Depois: 0
+// Esquerda/Direita: 0
+// Alinhamento: justificado
+function doPara() {
+  Word.run(function(context) {
+    var paragraphs = context.document.body.paragraphs;
+    context.load(paragraphs, 'items');
+    return context.sync().then(function() {
+      for (var i = 0; i < paragraphs.items.length; i++) {
+        var p = paragraphs.items[i];
         p.firstLineIndent = 35.43;
         p.leftIndent      = 0;
         p.rightIndent     = 0;
         p.lineSpacing     = 18;
         p.spaceBefore     = 0;
         p.spaceAfter      = 0;
+        p.alignment       = Word.Alignment.justified;
       }
-      return ctx.sync();
+      return context.sync();
     });
-  }).then(function(){
-    toast('✓ Parágrafos formatados!','tok');
-  }).catch(function(e){
-    toast('Erro: ' + e.message,'ter');
+  }).then(function() {
+    msg('Parágrafos formatados!');
+  }).catch(function(e) {
+    msg('Erro parágrafo: ' + e.message, true);
   });
 }
 
-// ── citações ──
-// recuo esq/dir 1cm = 28.35pt
-// espaçamento simples = lineSpacing 12pt
-// sem recuo 1ª linha
-// esquerda/direita = 0 (margem do recuo)
-// antes/depois = 0
-// justificado
-function fmtCit(){
-  Word.run(function(ctx){
-    var sel = ctx.document.getSelection();
-    sel.load('text');
-    return ctx.sync().then(function(){
-      if(!sel.text || !sel.text.trim()){
-        toast('Selecione o texto da citação primeiro.','tin');
-        return ctx.sync();
+// ── CITAÇÃO ──
+// Esq/Dir: 1cm = 28.35pt
+// Espaçamento simples = 12pt
+// Sem recuo primeira linha
+// Antes/Depois: 0
+// Alinhamento: justificado
+function doCit() {
+  Word.run(function(context) {
+    var selection = context.document.getSelection();
+    context.load(selection, 'text');
+    return context.sync().then(function() {
+      if (!selection.text || selection.text.trim() === '') {
+        msg('Selecione o texto da citação primeiro.', true);
+        return context.sync();
       }
-      var paras = sel.paragraphs;
-      paras.load('items');
-      return ctx.sync().then(function(){
-        for(var i=0; i<paras.items.length; i++){
-          var p = paras.items[i];
-          p.alignment       = Word.Alignment.justified;
+      var paragraphs = selection.paragraphs;
+      context.load(paragraphs, 'items');
+      return context.sync().then(function() {
+        for (var i = 0; i < paragraphs.items.length; i++) {
+          var p = paragraphs.items[i];
           p.firstLineIndent = 0;
           p.leftIndent      = 28.35;
           p.rightIndent     = 28.35;
           p.lineSpacing     = 12;
           p.spaceBefore     = 0;
           p.spaceAfter      = 0;
+          p.alignment       = Word.Alignment.justified;
         }
-        return ctx.sync();
+        return context.sync();
       });
     });
-  }).then(function(){
-    toast('✓ Citação formatada!','tok');
-  }).catch(function(e){
-    toast('Erro: ' + e.message,'ter');
+  }).then(function() {
+    msg('Citação formatada!');
+  }).catch(function(e) {
+    msg('Erro citação: ' + e.message, true);
   });
 }
 
-// ── sinônimos ──
-function getSyn(){
-  var word = document.getElementById('si').value.trim();
-  if(!word){ toast('Digite uma palavra.','tin'); return; }
-  document.getElementById('sl').style.display = 'block';
-  document.getElementById('st2').innerHTML = '';
-  fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
+// ── SINÔNIMOS ──
+function doSyn() {
+  var word = document.getElementById('synWord').value.trim();
+  if (!word) { msg('Digite uma palavra.', true); return; }
+
+  document.getElementById('synTags').innerHTML = 'Buscando...';
+
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:300,
-      system:'Responda APENAS JSON puro sem markdown: {"s":["sin1","sin2",...]} com 8 sinônimos em português.',
-      messages:[{role:'user',content:'Sinônimos de: '+word}]
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 200,
+      system: 'Responda APENAS JSON: {"s":["palavra1","palavra2",...]} com 8 sinônimos em português. Sem markdown.',
+      messages: [{ role: 'user', content: 'Sinônimos de: ' + word }]
     })
-  }).then(function(r){ return r.json(); })
-  .then(function(d){
-    var txt = d.content.map(function(i){return i.text||'';}).join('');
-    var obj = JSON.parse(txt.replace(/```json|```/g,'').trim());
-    renderSyn(obj.s||[], word);
-  }).catch(function(){
-    renderSyn(['similar','análogo','equivalente','correlato','semelhante','afim'], word);
-  }).finally(function(){
-    document.getElementById('sl').style.display = 'none';
+  }).then(function(r) { return r.json(); })
+  .then(function(d) {
+    var txt = d.content[0].text.replace(/```json|```/g, '').trim();
+    var obj = JSON.parse(txt);
+    showSyn(obj.s || [], word);
+  }).catch(function() {
+    showSyn(['similar','análogo','equivalente','correlato','semelhante','afim'], word);
   });
 }
 
-function renderSyn(list, original){
-  var wrap = document.getElementById('st2');
+function showSyn(list, original) {
+  var wrap = document.getElementById('synTags');
   wrap.innerHTML = '';
-  list.forEach(function(s){
+  list.forEach(function(s) {
     var t = document.createElement('span');
     t.className = 'tag';
     t.textContent = s;
-    t.onclick = function(){ insSyn(s, original, t); };
+    t.onclick = function() { useSyn(s, original); };
     wrap.appendChild(t);
   });
 }
 
-function insSyn(syn, original, el){
-  document.querySelectorAll('.tag').forEach(function(t){ t.classList.remove('on'); });
-  el.classList.add('on');
-  Word.run(function(ctx){
-    var sel = ctx.document.getSelection();
-    sel.load('text');
-    return ctx.sync().then(function(){
-      if(sel.text.trim().toLowerCase() === original.toLowerCase()){
+function useSyn(syn, original) {
+  Word.run(function(context) {
+    var sel = context.document.getSelection();
+    context.load(sel, 'text');
+    return context.sync().then(function() {
+      if (sel.text.trim().toLowerCase() === original.toLowerCase()) {
         sel.insertText(syn, Word.InsertLocation.replace);
-      } else {
-        var r = ctx.document.body.search(original,{matchCase:false,matchWholeWord:true});
-        r.load('items');
-        return ctx.sync().then(function(){
-          if(r.items.length) r.items[0].insertText(syn, Word.InsertLocation.replace);
-          return ctx.sync();
-        });
+        return context.sync();
       }
-      return ctx.sync();
+      var results = context.document.body.search(original, { matchCase: false, matchWholeWord: true });
+      context.load(results, 'items');
+      return context.sync().then(function() {
+        if (results.items.length > 0) {
+          results.items[0].insertText(syn, Word.InsertLocation.replace);
+        }
+        return context.sync();
+      });
     });
-  }).then(function(){
-    toast('✓ ' + original + ' → ' + syn,'tok');
-  }).catch(function(){
-    toast('Selecione a palavra no texto.','tin');
+  }).then(function() {
+    msg(original + ' → ' + syn);
+  }).catch(function(e) {
+    msg('Erro: ' + e.message, true);
   });
 }
 
-// ── substituir ──
-function doRep(){
-  var orig = document.getElementById('ro').value.trim();
-  var sub  = document.getElementById('rn').value.trim();
-  if(!orig||!sub){ toast('Preencha os dois campos.','tin'); return; }
-  Word.run(function(ctx){
-    var r = ctx.document.body.search(orig,{matchCase:false,matchWholeWord:true});
-    r.load('items');
-    return ctx.sync().then(function(){
-      if(!r.items.length){ toast('Palavra não encontrada.','ter'); return ctx.sync(); }
-      r.items[0].insertText(sub, Word.InsertLocation.replace);
-      return ctx.sync();
+// ── SUBSTITUIR ──
+function doRep() {
+  var orig = document.getElementById('repOld').value.trim();
+  var sub  = document.getElementById('repNew').value.trim();
+  if (!orig || !sub) { msg('Preencha os dois campos.', true); return; }
+  Word.run(function(context) {
+    var results = context.document.body.search(orig, { matchCase: false, matchWholeWord: true });
+    context.load(results, 'items');
+    return context.sync().then(function() {
+      if (results.items.length === 0) { msg('Palavra não encontrada.', true); return context.sync(); }
+      results.items[0].insertText(sub, Word.InsertLocation.replace);
+      return context.sync();
     });
-  }).then(function(){
-    toast('✓ Substituído!','tok');
-  }).catch(function(e){
-    toast('Erro: '+e.message,'ter');
+  }).then(function() {
+    msg('Substituído com sucesso!');
+  }).catch(function(e) {
+    msg('Erro: ' + e.message, true);
   });
 }
 </script>
