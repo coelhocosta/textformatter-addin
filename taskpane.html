@@ -481,25 +481,43 @@ async function checkSelection() {
 async function formatParagraphs() {
   try {
     await Word.run(async (ctx) => {
-      const body = ctx.document.body;
-      const paras = body.paragraphs;
+      const paras = ctx.document.body.paragraphs;
       paras.load('items');
       await ctx.sync();
 
-      paras.items.forEach(p => {
-        p.firstLineIndent = 35.4;   // 1.25cm em pontos
-        p.lineSpacingRule = "Multiple"; // string literal — evita bug do enum
-        p.lineSpacing = 18;          // 1.5 × 12pt = 18pt
-        p.spaceAfter = 0;
-        p.spaceBefore = 0;
-        p.alignment = "Justified";   // Alinhamento justificado
-      });
+      for (const p of paras.items) {
+        // Usa OOXML para garantir compatibilidade com Word for Mac
+        const ooxml = `<w:pPr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+          <w:jc w:val="both"/>
+          <w:ind w:firstLine="709"/>
+          <w:spacing w:line="360" w:lineRule="auto" w:before="0" w:after="0"/>
+        </w:pPr>`;
+        p.insertOoxml(ooxml, "Replace");
+      }
 
       await ctx.sync();
       showToast('✓ Parágrafos formatados!', 'success');
     });
   } catch(e) {
-    showToast('Erro: ' + e.message, 'error');
+    // Fallback: tenta via propriedades diretas
+    try {
+      await Word.run(async (ctx) => {
+        const paras = ctx.document.body.paragraphs;
+        paras.load('items');
+        await ctx.sync();
+        paras.items.forEach(p => {
+          p.firstLineIndent = 35.4;
+          p.lineSpacing = 18;
+          p.spaceAfter = 0;
+          p.spaceBefore = 0;
+          p.alignment = Word.Alignment.justified;
+        });
+        await ctx.sync();
+        showToast('✓ Parágrafos formatados!', 'success');
+      });
+    } catch(e2) {
+      showToast('Erro: ' + e2.message, 'error');
+    }
   }
 }
 
@@ -521,16 +539,16 @@ async function formatQuotes() {
         return;
       }
 
-      // 1cm ≈ 28.35pt
-      paras.items.forEach(p => {
-        p.leftIndent = 28.35;
-        p.rightIndent = 28.35;
-        p.firstLineIndent = 0;
-        p.lineSpacingRule = "Single"; // string literal — evita bug do enum
-        p.spaceAfter = 0;
-        p.spaceBefore = 8;
-        p.alignment = "Justified";   // Alinhamento justificado
-      });
+      for (const p of paras.items) {
+        // OOXML: recuo 1cm esq/dir, espaçamento simples, justificado
+        // 1cm = 567 twips, espaçamento simples = 240
+        const ooxml = `<w:pPr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+          <w:jc w:val="both"/>
+          <w:ind w:left="567" w:right="567" w:firstLine="0"/>
+          <w:spacing w:line="240" w:lineRule="auto" w:before="113" w:after="0"/>
+        </w:pPr>`;
+        p.insertOoxml(ooxml, "Replace");
+      }
 
       await ctx.sync();
       showToast('✓ Citação formatada!', 'success');
@@ -564,23 +582,21 @@ async function formatAll() {
   try {
     await Word.run(async (ctx) => {
       const body = ctx.document.body;
-      // Font
       body.font.name = 'Helvetica Neue';
       body.font.size = 12;
 
-      // Paragraphs
       const paras = body.paragraphs;
       paras.load('items');
       await ctx.sync();
 
-      paras.items.forEach(p => {
-        p.firstLineIndent = 35.4;
-        p.lineSpacingRule = "Multiple";
-        p.lineSpacing = 18;
-        p.spaceAfter = 0;
-        p.spaceBefore = 0;
-        p.alignment = "Justified";
-      });
+      for (const p of paras.items) {
+        const ooxml = `<w:pPr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+          <w:jc w:val="both"/>
+          <w:ind w:firstLine="709"/>
+          <w:spacing w:line="360" w:lineRule="auto" w:before="0" w:after="0"/>
+        </w:pPr>`;
+        p.insertOoxml(ooxml, "Replace");
+      }
 
       await ctx.sync();
       showToast('✓ Formatação completa aplicada!', 'success');
