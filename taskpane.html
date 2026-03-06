@@ -5,137 +5,42 @@
 <title>TextFormatter Pro</title>
 <script src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: Arial, sans-serif; font-size: 13px; padding: 10px; background: #f0f0f5; }
-h2 { font-size: 15px; margin-bottom: 10px; color: #222; padding-bottom: 8px; border-bottom: 2px solid #4a4ae8; }
-.section { background: #fff; border-radius: 8px; padding: 10px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-.sec-title { font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: #888; margin-bottom: 8px; }
-button { display:block; width:100%; padding:9px 12px; margin-bottom:6px; font-size:12px; font-weight:bold; border:none; border-radius:6px; cursor:pointer; text-align:left; }
-button:last-child { margin-bottom:0; }
-button:hover { opacity:0.88; }
+body { font-family: Arial, sans-serif; padding: 12px; background: #fff; }
+button { display:block; width:100%; padding:10px; margin-bottom:8px; font-size:13px; font-weight:bold; border:none; border-radius:5px; cursor:pointer; }
 .b1 { background:#4a4ae8; color:#fff; }
 .b2 { background:#e84a4a; color:#fff; }
-.b3 { background:#2ecc71; color:#333; }
-.b5 { background:#e8a020; color:#fff; }
-.b6 { background:#0077b6; color:#fff; }
-.b7 { background:#888; color:#fff; }
-.b8 { background:#555; color:#fff; }
-input { width:100%; padding:7px 8px; margin-bottom:6px; border:1px solid #ccc; border-radius:5px; font-size:12px; }
-input:focus { outline:none; border-color:#4a4ae8; }
-.row { display:flex; gap:6px; margin-bottom:6px; }
-.row input { margin-bottom:0; }
-.row button { width:auto; margin-bottom:0; padding:7px 12px; white-space:nowrap; }
-.tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; min-height:20px; }
-.tag { background:#ebebff; border:1px solid #aaa; border-radius:12px; padding:3px 9px; font-size:11px; cursor:pointer; }
-.tag:hover { background:#4a4ae8; color:#fff; border-color:#4a4ae8; }
-#log { padding:8px 10px; border-radius:5px; font-size:12px; margin-bottom:8px; display:none; }
-.ok  { background:#d4edda; color:#155724; display:block !important; }
-.err { background:#f8d7da; color:#721c24; display:block !important; }
+.b3 { background:#2ecc71; color:#000; }
+.b4 { background:#e8a020; color:#fff; }
+.b5 { background:#888; color:#fff; }
+#log { background:#f5f5f5; border:1px solid #ccc; border-radius:5px; padding:10px; font-size:12px; min-height:40px; margin-top:10px; }
 </style>
 </head>
 <body>
 
-<h2>✦ TextFormatter Pro</h2>
-<div id="log"></div>
+<button class="b1" id="b1">¶ Formatar Parágrafo (cursor)</button>
+<button class="b2" id="b2">❝ Formatar Citação (seleção)</button>
+<button class="b3" id="b3">A Helvetica Neue 12pt</button>
+<button class="b4" id="b4">🔍 Marcar Espaços Excedentes</button>
+<button class="b5" id="b5">✕ Remover Marcações</button>
 
-<div class="section">
-  <div class="sec-title">Formatação</div>
-  <button class="b1" id="btnPara">¶  Parágrafos — 1,25cm · Esp. 1,5</button>
-  <button class="b2" id="btnCit">❝  Citações — Recuo 1cm · Simples</button>
-  <button class="b3" id="btnFont">A  Helvetica Neue 12pt</button>
-  <button class="b6" id="btnJust">☰  Justificar Texto</button>
-</div>
-
-<div class="section">
-  <div class="sec-title">Análise de Espaçamento</div>
-  <button class="b5" id="btnAnalyze">🔍  Marcar Espaços Excedentes</button>
-  <button class="b7" id="btnClearMark">✕  Remover Marcações</button>
-  <button class="b8" id="btnClean">✂  Remover Espaços Duplos</button>
-</div>
-
-<div class="section">
-  <div class="sec-title">Sinônimos</div>
-  <div class="row">
-    <input type="text" id="synWord" placeholder="Digite ou selecione uma palavra...">
-    <button class="b1" id="btnSyn">Buscar</button>
-  </div>
-  <div class="tags" id="synTags"><span style="color:#aaa;font-size:11px">Sinônimos aparecerão aqui...</span></div>
-</div>
-
-<div class="section">
-  <div class="sec-title">Substituir</div>
-  <div class="row">
-    <input type="text" id="repOld" placeholder="Palavra original">
-    <input type="text" id="repNew" placeholder="Substituir por">
-  </div>
-  <button class="b8" id="btnRep">↔  Substituir</button>
-</div>
+<div id="log">Pronto.</div>
 
 <canvas id="cv" style="display:none"></canvas>
 
 <script>
-// Medição de largura de texto com canvas
-// Linha útil: A4 (21cm) - margens (3+2cm) - recuo (1,25cm) = 14,75cm = 418pt
+function log(t) { document.getElementById('log').textContent = t; }
+
 var LINE_PT = 418;
 var cv = document.getElementById('cv').getContext('2d');
 cv.font = '12px "Helvetica Neue", Helvetica, Arial, sans-serif';
 function mw(s) { return cv.measureText(s).width / 1.333; }
 
-// Status
-var _st;
-function log(t, err) {
-  var el = document.getElementById('log');
-  el.textContent = t;
-  el.className = err ? 'err' : 'ok';
-  clearTimeout(_st);
-  _st = setTimeout(function(){ el.className=''; el.style.display='none'; }, 4000);
-}
-
-// Atribui eventos diretamente — sem depender de Office.initialize/onReady
-document.getElementById('btnPara').onclick     = doPara;
-document.getElementById('btnCit').onclick      = doCit;
-document.getElementById('btnFont').onclick     = doFont;
-document.getElementById('btnJust').onclick     = doJust;
-document.getElementById('btnAnalyze').onclick  = doAnalyze;
-document.getElementById('btnClearMark').onclick= doClearMark;
-document.getElementById('btnClean').onclick    = doClean;
-document.getElementById('btnSyn').onclick      = doSyn;
-document.getElementById('btnRep').onclick      = doRep;
-
-// Detecta palavra selecionada
-setInterval(function(){
-  try {
-    Word.run(function(ctx){
-      var s = ctx.document.getSelection();
-      ctx.load(s,'text');
-      return ctx.sync().then(function(){
-        var t = s.text.trim();
-        if(t && t.split(' ').length<=4 && t.length<60)
-          document.getElementById('synWord').value = t;
-      });
-    }).catch(function(){});
-  } catch(e){}
-}, 2000);
-
-// ── FONTE ──
-function doFont(){
-  Word.run(function(ctx){
-    ctx.document.body.font.name = 'Helvetica Neue';
-    ctx.document.body.font.size = 12;
-    return ctx.sync();
-  }).then(function(){ log('✓ Fonte: Helvetica Neue 12pt aplicada!'); })
-  .catch(function(e){ log('Erro: '+e.message, true); });
-}
-
-// ── PARÁGRAFOS ──
-// Formata o parágrafo onde o cursor está (sem precisar selecionar)
-function doPara(){
-  Word.run(function(ctx){
-    var sel = ctx.document.getSelection();
-    var ps  = sel.paragraphs;
-    ctx.load(ps,'items');
-    return ctx.sync().then(function(){
-      for(var i=0;i<ps.items.length;i++){
+document.getElementById('b1').onclick = function() {
+  Word.run(function(ctx) {
+    var ps = ctx.document.getSelection().paragraphs;
+    ctx.load(ps, 'items');
+    return ctx.sync().then(function() {
+      for (var i = 0; i < ps.items.length; i++) {
         ps.items[i].firstLineIndent = 35.43;
         ps.items[i].leftIndent      = 0;
         ps.items[i].rightIndent     = 0;
@@ -146,21 +51,20 @@ function doPara(){
       }
       return ctx.sync();
     });
-  }).then(function(){ log('✓ Parágrafo formatado!'); })
-  .catch(function(e){ log('Erro: '+e.message, true); });
-}
+  }).then(function() { log('OK: Parágrafo formatado!'); })
+  .catch(function(e) { log('ERRO: ' + e.message); });
+};
 
-// ── CITAÇÕES ──
-function doCit(){
-  Word.run(function(ctx){
+document.getElementById('b2').onclick = function() {
+  Word.run(function(ctx) {
     var sel = ctx.document.getSelection();
-    ctx.load(sel,'text');
-    return ctx.sync().then(function(){
-      if(!sel.text||!sel.text.trim()){ log('Selecione o texto da citação primeiro.', true); return ctx.sync(); }
+    ctx.load(sel, 'text');
+    return ctx.sync().then(function() {
+      if (!sel.text || !sel.text.trim()) { log('Selecione o texto da citação.'); return ctx.sync(); }
       var ps = sel.paragraphs;
-      ctx.load(ps,'items');
-      return ctx.sync().then(function(){
-        for(var i=0;i<ps.items.length;i++){
+      ctx.load(ps, 'items');
+      return ctx.sync().then(function() {
+        for (var i = 0; i < ps.items.length; i++) {
           ps.items[i].firstLineIndent = 0;
           ps.items[i].leftIndent      = 28.35;
           ps.items[i].rightIndent     = 28.35;
@@ -172,234 +76,121 @@ function doCit(){
         return ctx.sync();
       });
     });
-  }).then(function(){ log('✓ Citação formatada!'); })
-  .catch(function(e){ log('Erro: '+e.message, true); });
-}
+  }).then(function() { log('OK: Citação formatada!'); })
+  .catch(function(e) { log('ERRO: ' + e.message); });
+};
 
-// ── JUSTIFICAR ──
-function doJust(){
-  Word.run(function(ctx){
-    var sel = ctx.document.getSelection();
-    ctx.load(sel,'text');
-    return ctx.sync().then(function(){
-      var ps = (sel.text&&sel.text.trim()) ? sel.paragraphs : ctx.document.body.paragraphs;
-      ctx.load(ps,'items');
-      return ctx.sync().then(function(){
-        for(var i=0;i<ps.items.length;i++)
-          ps.items[i].alignment = Word.Alignment.justified;
-        return ctx.sync();
-      });
-    });
-  }).then(function(){ log('✓ Texto justificado!'); })
-  .catch(function(e){ log('Erro: '+e.message, true); });
-}
+document.getElementById('b3').onclick = function() {
+  Word.run(function(ctx) {
+    ctx.document.body.font.name = 'Helvetica Neue';
+    ctx.document.body.font.size = 12;
+    return ctx.sync();
+  }).then(function() { log('OK: Fonte aplicada!'); })
+  .catch(function(e) { log('ERRO: ' + e.message); });
+};
 
-// ── MARCAR ESPAÇOS EXCEDENTES ──
-// Simula quebra de linha. Para cada linha não-final com espaço excedente,
-// insere N ! vermelhos no final da linha (após o último caractere),
-// onde N = número de espaços que cabem no espaço restante.
-function doAnalyze(){
-  Word.run(function(ctx){
+document.getElementById('b4').onclick = function() {
+  Word.run(function(ctx) {
     var sel = ctx.document.getSelection();
-    ctx.load(sel,'text');
-    return ctx.sync().then(function(){
-      var ps = (sel.text&&sel.text.trim()) ? sel.paragraphs : ctx.document.body.paragraphs;
-      ctx.load(ps,'items');
-      return ctx.sync().then(function(){
-        var marked = 0;
-        var spaceW = mw(' ');
+    ctx.load(sel, 'text');
+    return ctx.sync().then(function() {
+      var ps = (sel.text && sel.text.trim()) ? sel.paragraphs : ctx.document.body.paragraphs;
+      ctx.load(ps, 'items');
+      return ctx.sync().then(function() {
         var bangW  = mw('!');
-        var i = 0;
+        var marked = 0;
+        var pi     = 0;
 
-        function procPara(){
-          if(i>=ps.items.length){
-            return ctx.sync().then(function(){
-              log(marked>0 ? '✓ Marcações inseridas em '+marked+' linha(s).' : '✓ Sem espaços excedentes.');
+        function nextPara() {
+          if (pi >= ps.items.length) {
+            return ctx.sync().then(function() {
+              log(marked > 0 ? 'OK: ' + marked + ' linha(s) marcadas.' : 'OK: Sem espaços excedentes.');
             });
           }
-          var p = ps.items[i++];
-          ctx.load(p,'text');
-          return ctx.sync().then(function(){
-            var text = (p.text||'').replace(/[
-]+/g,' ').replace(/ +/g,' ').trim();
-            if(!text) return procPara();
+          var p = ps.items[pi++];
+          ctx.load(p, 'text');
+          return ctx.sync().then(function() {
+            var raw = (p.text || '').replace(/[\r\n]+/g, ' ').replace(/ +/g, ' ').trim();
+            if (!raw) return nextPara();
 
-            // Simula quebra de linha com canvas
-            var words = text.split(' ').filter(Boolean);
+            // Simula quebra de linha
+            var words = raw.split(' ').filter(Boolean);
             var lines = [], cur = '';
-            for(var w=0;w<words.length;w++){
-              var test = cur ? cur+' '+words[w] : words[w];
-              if(mw(test)<=LINE_PT){ cur=test; }
-              else{ if(cur) lines.push(cur); cur=words[w]; }
+            for (var w = 0; w < words.length; w++) {
+              var test = cur ? cur + ' ' + words[w] : words[w];
+              if (mw(test) <= LINE_PT) { cur = test; }
+              else { if (cur) lines.push(cur); cur = words[w]; }
             }
-            if(cur) lines.push(cur);
+            if (cur) lines.push(cur);
 
-            // Para cada linha não-final: calcula quantos ! cabem no espaço restante
-            var toMark = [];
-            for(var li=0;li<lines.length-1;li++){
+            // Coleta linhas com espaço excedente
+            var targets = [];
+            for (var li = 0; li < lines.length - 1; li++) {
               var rem = LINE_PT - mw(lines[li]);
-              if(rem >= bangW){
-                var count = Math.floor(rem / bangW);
-                toMark.push({ line: lines[li], count: count });
+              if (rem >= bangW) {
+                var n = Math.floor(rem / bangW);
+                var anchor = lines[li].slice(-10).trim();
+                var bangs  = '';
+                for (var x = 0; x < n; x++) bangs += '!';
+                if (anchor && bangs) targets.push({ anchor: anchor, bangs: bangs });
               }
             }
-            if(!toMark.length) return procPara();
+            if (!targets.length) return nextPara();
 
-            var j = 0;
-            function procLine(){
-              if(j>=toMark.length) return procPara();
-              var item  = toMark[j++];
-              var line  = item.line;
-              var count = item.count;
+            var ti = 0;
+            function nextTarget() {
+              if (ti >= targets.length) return nextPara();
+              var tgt = targets[ti++];
 
-              // Âncora: últimos 8 chars da linha para localizar o fim
-              var anchor = line.slice(-8).trim();
-              if(!anchor) return procLine();
+              var res = p.search(tgt.anchor, { matchCase: false, matchWholeWord: false });
+              ctx.load(res, 'items');
+              return ctx.sync().then(function() {
+                if (!res.items.length) return nextTarget();
 
-              var res = p.search(anchor, {matchCase:false, matchWholeWord:false});
-              ctx.load(res,'items');
-              return ctx.sync().then(function(){
-                if(!res.items.length) return procLine();
+                // Insere os ! após o final do anchor
+                res.items[res.items.length - 1].insertText(tgt.bangs, 'After');
+                return ctx.sync().then(function() {
 
-                // Insere os ! após o anchor (fim da linha)
-                var bangs = new Array(count+1).join('!');
-                var range = res.items[res.items.length-1];
-                range.insertText(bangs, 'After');
-                return ctx.sync().then(function(){
-
-                  // Colore os ! em vermelho
-                  var bangSearch = p.search(anchor+bangs, {matchCase:false, matchWholeWord:false});
-                  ctx.load(bangSearch,'items');
-                  return ctx.sync().then(function(){
-                    if(bangSearch.items.length){
-                      var br = bangSearch.items[bangSearch.items.length-1];
-                      br.font.color = '#CC0000';
-                      br.font.bold  = true;
+                  // Busca anchor+bangs e colore de vermelho
+                  var find = p.search(tgt.anchor + tgt.bangs, { matchCase: false, matchWholeWord: false });
+                  ctx.load(find, 'items');
+                  return ctx.sync().then(function() {
+                    if (find.items.length) {
+                      find.items[find.items.length - 1].font.color = '#CC0000';
+                      find.items[find.items.length - 1].font.bold  = true;
                     }
                     marked++;
-                    return ctx.sync().then(procLine);
+                    return ctx.sync().then(nextTarget);
                   });
                 });
               });
             }
-            return procLine();
+            return nextTarget();
           });
         }
-        return procPara();
+        return nextPara();
       });
     });
-  }).catch(function(e){ log('Erro: '+e.message, true); });
-}
+  }).catch(function(e) { log('ERRO: ' + e.message); });
+};
 
-// ── REMOVER MARCAÇÕES ──
-function doClearMark(){
-  Word.run(function(ctx){
-    var found = ctx.document.body.search('!', {matchWildcards:false});
-    ctx.load(found,'items');
-    return ctx.sync().then(function(){
-      for(var i=0;i<found.items.length;i++){
-        ctx.load(found.items[i],'font');
-      }
-      return ctx.sync().then(function(){
-        for(var i=0;i<found.items.length;i++){
-          var color = (found.items[i].font.color||'').toString().toUpperCase().replace('#','');
-          if(color==='CC0000'){
-            found.items[i].insertText('', Word.InsertLocation.replace);
-          }
+document.getElementById('b5').onclick = function() {
+  Word.run(function(ctx) {
+    var found = ctx.document.body.search('!', { matchWildcards: false });
+    ctx.load(found, 'items');
+    return ctx.sync().then(function() {
+      for (var i = 0; i < found.items.length; i++) ctx.load(found.items[i], 'font');
+      return ctx.sync().then(function() {
+        for (var i = 0; i < found.items.length; i++) {
+          var c = (found.items[i].font.color || '').replace('#','').toUpperCase();
+          if (c === 'CC0000') found.items[i].insertText('', Word.InsertLocation.replace);
         }
         return ctx.sync();
       });
     });
-  }).then(function(){ log('✓ Marcações removidas!'); })
-  .catch(function(e){ log('Erro: '+e.message, true); });
-}
-
-// ── REMOVER ESPAÇOS DUPLOS ──
-function doClean(){
-  Word.run(function(ctx){
-    function rep(n){
-      var r = ctx.document.body.search('  ', {matchWildcards:false});
-      ctx.load(r,'items');
-      return ctx.sync().then(function(){
-        if(!r.items.length) return ctx.sync();
-        for(var i=0;i<r.items.length;i++)
-          r.items[i].insertText(' ', Word.InsertLocation.replace);
-        return ctx.sync().then(function(){ if(n>1) return rep(n-1); });
-      });
-    }
-    return rep(5);
-  }).then(function(){ log('✓ Espaços duplos removidos!'); })
-  .catch(function(e){ log('Erro: '+e.message, true); });
-}
-
-// ── SINÔNIMOS ──
-function doSyn(){
-  var word = document.getElementById('synWord').value.trim();
-  if(!word){ log('Digite uma palavra.', true); return; }
-  document.getElementById('synTags').innerHTML = '<span style="color:#aaa;font-size:11px">Buscando...</span>';
-  fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:200,
-      system:'Responda APENAS JSON puro sem markdown: {"s":["p1","p2",...]} com 8 sinônimos em português.',
-      messages:[{role:'user',content:'Sinônimos de: '+word}]
-    })
-  }).then(function(r){return r.json();})
-  .then(function(d){
-    var txt = d.content[0].text.replace(/```json|```/g,'').trim();
-    showSyn(JSON.parse(txt).s||[], word);
-  }).catch(function(){
-    showSyn(['similar','análogo','equivalente','correlato','semelhante','afim','próximo','parecido'], word);
-  });
-}
-function showSyn(list, orig){
-  var w = document.getElementById('synTags');
-  w.innerHTML = '';
-  list.forEach(function(s){
-    var t = document.createElement('span');
-    t.className='tag'; t.textContent=s;
-    t.onclick = function(){ useSyn(s,orig); };
-    w.appendChild(t);
-  });
-}
-function useSyn(syn, orig){
-  Word.run(function(ctx){
-    var sel = ctx.document.getSelection();
-    ctx.load(sel,'text');
-    return ctx.sync().then(function(){
-      if(sel.text.trim().toLowerCase()===orig.toLowerCase()){
-        sel.insertText(syn, Word.InsertLocation.replace);
-        return ctx.sync();
-      }
-      var r = ctx.document.body.search(orig, {matchCase:false,matchWholeWord:true});
-      ctx.load(r,'items');
-      return ctx.sync().then(function(){
-        if(r.items.length) r.items[0].insertText(syn, Word.InsertLocation.replace);
-        return ctx.sync();
-      });
-    });
-  }).then(function(){ log('✓ '+orig+' → '+syn); })
-  .catch(function(e){ log('Erro: '+e.message, true); });
-}
-
-// ── SUBSTITUIR ──
-function doRep(){
-  var o = document.getElementById('repOld').value.trim();
-  var n = document.getElementById('repNew').value.trim();
-  if(!o||!n){ log('Preencha os dois campos.', true); return; }
-  Word.run(function(ctx){
-    var r = ctx.document.body.search(o, {matchCase:false,matchWholeWord:true});
-    ctx.load(r,'items');
-    return ctx.sync().then(function(){
-      if(!r.items.length){ log('Palavra não encontrada.', true); return ctx.sync(); }
-      r.items[0].insertText(n, Word.InsertLocation.replace);
-      return ctx.sync();
-    });
-  }).then(function(){ log('✓ Substituído!'); })
-  .catch(function(e){ log('Erro: '+e.message, true); });
-}
+  }).then(function() { log('OK: Marcações removidas!'); })
+  .catch(function(e) { log('ERRO: ' + e.message); });
+};
 </script>
 </body>
 </html>
