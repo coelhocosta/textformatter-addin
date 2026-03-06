@@ -36,6 +36,7 @@ input:focus { outline: none; border-color: #4a4ae8; }
 <body>
 <h2>✦ TextFormatter Pro</h2>
 <div id="status"></div>
+<button onclick="doTest()" style="background:#333;color:yellow;width:100%;padding:8px;border:none;border-radius:5px;font-size:12px;font-weight:bold;margin-bottom:8px;cursor:pointer;">⚡ TESTE DE CONEXÃO</button>
 
 <div class="section">
   <div class="sec-title">Formatação</div>
@@ -88,7 +89,24 @@ function msg(t, err) {
   _st = setTimeout(function(){ el.className=''; el.style.display='none'; }, 4000);
 }
 
-Office.initialize = function() {
+function doTest(){
+  try {
+    Word.run(function(ctx){
+      var body = ctx.document.body;
+      ctx.load(body, 'text');
+      return ctx.sync().then(function(){
+        var chars = (body.text||'').length;
+        msg('✓ Word conectado! Documento tem '+chars+' caracteres.');
+      });
+    }).catch(function(e){
+      msg('Word.run erro: '+e.message, true);
+    });
+  } catch(e) {
+    msg('Erro geral: '+e.message, true);
+  }
+}
+
+Office.onReady(function(info) { if(info.host !== Office.HostType.Word) return;
   document.getElementById('btnPara').onclick     = doPara;
   document.getElementById('btnCit').onclick      = doCit;
   document.getElementById('btnFont').onclick     = doFont;
@@ -110,7 +128,7 @@ Office.initialize = function() {
       });
     }).catch(function(){});
   }, 2000);
-};
+});
 
 function doFont(){
   Word.run(function(ctx){
