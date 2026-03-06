@@ -10,82 +10,33 @@ body { font-family: Arial, sans-serif; font-size: 13px; padding: 10px; backgroun
 h2 { font-size: 15px; margin-bottom: 10px; color: #222; padding-bottom: 8px; border-bottom: 2px solid #4a4ae8; }
 .section { background: #fff; border-radius: 8px; padding: 10px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
 .sec-title { font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: #888; margin-bottom: 8px; }
-button {
-  display: block; width: 100%; padding: 9px 12px;
-  margin-bottom: 6px; font-size: 12px; font-weight: bold;
-  border: none; border-radius: 6px; cursor: pointer; text-align: left;
-}
+button { display: block; width: 100%; padding: 9px 12px; margin-bottom: 6px; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-align: left; }
 button:last-child { margin-bottom: 0; }
+button:hover { opacity: 0.88; }
 .b1 { background: #4a4ae8; color: white; }
 .b2 { background: #e84a4a; color: white; }
 .b3 { background: #2ecc71; color: #333; }
 .b4 { background: #666; color: white; }
 .b5 { background: #e8a020; color: white; }
 .b6 { background: #0077b6; color: white; }
-button:hover { opacity: 0.88; }
-input {
-  width: 100%; padding: 7px 8px; margin-bottom: 6px;
-  border: 1px solid #ccc; border-radius: 5px; font-size: 12px;
-}
+.b7 { background: #999; color: white; }
+input { width: 100%; padding: 7px 8px; margin-bottom: 6px; border: 1px solid #ccc; border-radius: 5px; font-size: 12px; }
 input:focus { outline: none; border-color: #4a4ae8; }
 .row { display: flex; gap: 6px; margin-bottom: 6px; }
 .row input { margin-bottom: 0; }
 .row button { width: auto; margin-bottom: 0; padding: 7px 12px; }
 .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; min-height: 20px; }
-.tag {
-  background: #ebebff; border: 1px solid #aaa;
-  border-radius: 12px; padding: 3px 9px;
-  font-size: 11px; cursor: pointer;
-}
+.tag { background: #ebebff; border: 1px solid #aaa; border-radius: 12px; padding: 3px 9px; font-size: 11px; cursor: pointer; }
 .tag:hover { background: #4a4ae8; color: white; border-color: #4a4ae8; }
-#status {
-  padding: 8px 10px; border-radius: 5px; font-size: 12px;
-  margin-bottom: 8px; display: none;
-}
+#status { padding: 8px 10px; border-radius: 5px; font-size: 12px; margin-bottom: 8px; display: none; }
 .ok  { background: #d4edda; color: #155724; display: block !important; }
 .err { background: #f8d7da; color: #721c24; display: block !important; }
-
-/* Análise de linha */
-#lineCanvas { display: none; }
-.line-row {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 12px;
-  line-height: 1.5;
-  margin-bottom: 2px;
-  word-break: break-word;
-  white-space: pre-wrap;
-  border-bottom: 1px solid #f0f0f0;
-  padding: 2px 0;
-}
-.excess { color: #e84a4a; font-weight: bold; }
-.line-num { font-size: 10px; color: #aaa; margin-right: 4px; }
-#analysisBox {
-  background: #fff8f8;
-  border: 1px solid #f5c6cb;
-  border-radius: 6px;
-  padding: 8px;
-  margin-top: 8px;
-  max-height: 300px;
-  overflow-y: auto;
-  display: none;
-}
-#analysisBox h4 { font-size: 11px; color: #666; margin-bottom: 6px; }
-#analysisStats {
-  font-size: 11px; color: #555;
-  background: #f0f0f0;
-  border-radius: 4px;
-  padding: 5px 8px;
-  margin-bottom: 6px;
-  display: none;
-}
 </style>
 </head>
 <body>
-
 <h2>✦ TextFormatter Pro</h2>
 <div id="status"></div>
 
-<!-- FORMATAÇÃO -->
 <div class="section">
   <div class="sec-title">Formatação</div>
   <button class="b1" id="btnPara">¶  Parágrafos — 1,25cm · Esp. 1,5</button>
@@ -94,16 +45,13 @@ input:focus { outline: none; border-color: #4a4ae8; }
   <button class="b6" id="btnJust">☰  Justificar Texto</button>
 </div>
 
-<!-- ANÁLISE DE LINHAS -->
 <div class="section">
   <div class="sec-title">Análise de Espaçamento</div>
-  <button class="b5" id="btnAnalyze">🔍  Marcar Espaços no Word</button>
-  <button class="b4" id="btnClearMark" style="background:#999">✕  Remover Marcações</button>
+  <button class="b5" id="btnAnalyze">🔍  Marcar Espaços Excedentes</button>
+  <button class="b7" id="btnClearMark">✕  Remover Marcações</button>
   <button class="b4" id="btnClean">✂  Remover Espaços Duplos</button>
-
 </div>
 
-<!-- SINÔNIMOS -->
 <div class="section">
   <div class="sec-title">Sinônimos</div>
   <div class="row">
@@ -113,7 +61,6 @@ input:focus { outline: none; border-color: #4a4ae8; }
   <div class="tags" id="synTags"><span style="color:#aaa;font-size:11px">Sinônimos aparecerão aqui...</span></div>
 </div>
 
-<!-- SUBSTITUIR -->
 <div class="section">
   <div class="sec-title">Substituir</div>
   <div class="row">
@@ -123,373 +70,321 @@ input:focus { outline: none; border-color: #4a4ae8; }
   <button class="b4" id="btnRep">↔  Substituir</button>
 </div>
 
-<!-- canvas oculto para medir texto -->
-<canvas id="lineCanvas"></canvas>
+<canvas id="cv" style="display:none"></canvas>
 
 <script>
-// ── CONSTANTES ──
-// Largura da linha em px com Helvetica Neue 12pt, margens ABNT
-// A4 = 21cm, margem esq 3cm + dir 2cm = texto 16cm
-// 16cm a 96dpi = ~604px, mas no Word a unidade é pt
-// 16cm = 453.5pt. Com recuo 1,25cm (35.43pt) = texto ~418pt
-// Medida empírica ajustada para Helvetica Neue 12pt justificado:
-var LINE_WIDTH_PT = 418;   // largura útil em pontos (com recuo padrão)
-var FONT_SIZE     = 12;    // pt
-var FONT_FACE     = 'Helvetica Neue, Helvetica, Arial, sans-serif';
+// Largura da linha em pontos: A4 16cm área de texto, recuo 1,25cm = 14,75cm = 418pt
+var LINE_PT = 418;
+var cv = document.getElementById('cv').getContext('2d');
+cv.font = '12px "Helvetica Neue", Helvetica, Arial, sans-serif';
+function mw(s) { return cv.measureText(s).width / 1.333; }
 
-// canvas para medir largura real de texto
-var _canvas = document.getElementById('lineCanvas');
-var _ctx2d  = _canvas.getContext('2d');
-_ctx2d.font = FONT_SIZE + 'px ' + FONT_FACE;
-
-function measureText(str) {
-  // converte pt para px (1pt = 1.333px a 96dpi)
-  return _ctx2d.measureText(str).width / 1.333; // retorna em pt
+var _st;
+function msg(t, err) {
+  var el = document.getElementById('status');
+  el.textContent = t;
+  el.className = err ? 'err' : 'ok';
+  clearTimeout(_st);
+  _st = setTimeout(function(){ el.className=''; el.style.display='none'; }, 4000);
 }
 
-// ── INIT ──
 Office.initialize = function() {
-  document.getElementById('btnPara').onclick    = doPara;
-  document.getElementById('btnCit').onclick     = doCit;
-  document.getElementById('btnFont').onclick    = doFont;
-  document.getElementById('btnJust').onclick    = doJust;
-  document.getElementById('btnAnalyze').onclick    = doAnalyze;
-  document.getElementById('btnClearMark').onclick  = doClearMark;
-  document.getElementById('btnClean').onclick   = doClean;
-  document.getElementById('btnSyn').onclick     = doSyn;
-  document.getElementById('btnRep').onclick     = doRep;
+  document.getElementById('btnPara').onclick     = doPara;
+  document.getElementById('btnCit').onclick      = doCit;
+  document.getElementById('btnFont').onclick     = doFont;
+  document.getElementById('btnJust').onclick     = doJust;
+  document.getElementById('btnAnalyze').onclick  = doAnalyze;
+  document.getElementById('btnClearMark').onclick= doClearMark;
+  document.getElementById('btnClean').onclick    = doClean;
+  document.getElementById('btnSyn').onclick      = doSyn;
+  document.getElementById('btnRep').onclick      = doRep;
 
-  // detecta seleção a cada 2s para sinônimos
-  setInterval(function() {
-    Word.run(function(ctx) {
+  setInterval(function(){
+    Word.run(function(ctx){
       var s = ctx.document.getSelection();
-      ctx.load(s, 'text');
-      return ctx.sync().then(function() {
+      ctx.load(s,'text');
+      return ctx.sync().then(function(){
         var t = s.text.trim();
-        if (t && t.split(' ').length <= 4 && t.length < 60) {
+        if(t && t.split(' ').length<=4 && t.length<60)
           document.getElementById('synWord').value = t;
-        }
       });
     }).catch(function(){});
   }, 2000);
 };
 
-// ── STATUS ──
-var _st;
-function msg(text, isErr) {
-  var el = document.getElementById('status');
-  el.textContent = text;
-  el.className = isErr ? 'err' : 'ok';
-  clearTimeout(_st);
-  _st = setTimeout(function() { el.className = ''; el.style.display = 'none'; }, 4000);
-}
-
-// ── FONTE ──
-function doFont() {
-  Word.run(function(ctx) {
-    ctx.document.body.font.name = 'Helvetica Neue';
-    ctx.document.body.font.size = 12;
+function doFont(){
+  Word.run(function(ctx){
+    ctx.document.body.font.name='Helvetica Neue';
+    ctx.document.body.font.size=12;
     return ctx.sync();
-  }).then(function() {
-    msg('✓ Fonte: Helvetica Neue 12pt aplicada!');
-  }).catch(function(e) { msg('Erro fonte: ' + e.message, true); });
+  }).then(function(){ msg('✓ Fonte aplicada!'); })
+  .catch(function(e){ msg('Erro: '+e.message,true); });
 }
 
-// ── JUSTIFICAR ──
-function doJust() {
-  Word.run(function(ctx) {
-    var sel = ctx.document.getSelection();
-    ctx.load(sel, 'text');
-    return ctx.sync().then(function() {
-      if (sel.text && sel.text.trim()) {
-        // Justifica apenas a seleção
-        var paras = sel.paragraphs;
-        ctx.load(paras, 'items');
-        return ctx.sync().then(function() {
-          for (var i = 0; i < paras.items.length; i++) {
-            paras.items[i].alignment = Word.Alignment.justified;
-          }
-          return ctx.sync();
-        });
-      } else {
-        // Sem seleção: justifica o documento inteiro
-        var paras = ctx.document.body.paragraphs;
-        ctx.load(paras, 'items');
-        return ctx.sync().then(function() {
-          for (var i = 0; i < paras.items.length; i++) {
-            paras.items[i].alignment = Word.Alignment.justified;
-          }
-          return ctx.sync();
-        });
-      }
-    });
-  }).then(function() {
-    msg('✓ Texto justificado!');
-  }).catch(function(e) { msg('Erro: ' + e.message, true); });
-}
-
-// ── PARÁGRAFO ──
-function doPara() {
-  Word.run(function(ctx) {
-    var paras = ctx.document.body.paragraphs;
-    ctx.load(paras, 'items');
-    return ctx.sync().then(function() {
-      for (var i = 0; i < paras.items.length; i++) {
-        var p = paras.items[i];
-        p.firstLineIndent = 35.43;
-        p.leftIndent      = 0;
-        p.rightIndent     = 0;
-        p.lineSpacing     = 18;
-        p.spaceBefore     = 0;
-        p.spaceAfter      = 0;
-        p.alignment       = Word.Alignment.justified;
+function doPara(){
+  Word.run(function(ctx){
+    var ps = ctx.document.body.paragraphs;
+    ctx.load(ps,'items');
+    return ctx.sync().then(function(){
+      for(var i=0;i<ps.items.length;i++){
+        ps.items[i].firstLineIndent=35.43;
+        ps.items[i].leftIndent=0;
+        ps.items[i].rightIndent=0;
+        ps.items[i].lineSpacing=18;
+        ps.items[i].spaceBefore=0;
+        ps.items[i].spaceAfter=0;
+        ps.items[i].alignment=Word.Alignment.justified;
       }
       return ctx.sync();
     });
-  }).then(function() {
-    msg('✓ Parágrafos formatados!');
-  }).catch(function(e) { msg('Erro parágrafo: ' + e.message, true); });
+  }).then(function(){ msg('✓ Parágrafos formatados!'); })
+  .catch(function(e){ msg('Erro: '+e.message,true); });
 }
 
-// ── CITAÇÃO ──
-function doCit() {
-  Word.run(function(ctx) {
-    var sel = ctx.document.getSelection();
-    ctx.load(sel, 'text');
-    return ctx.sync().then(function() {
-      if (!sel.text || !sel.text.trim()) {
-        msg('Selecione o texto da citação primeiro.', true);
-        return ctx.sync();
-      }
-      var paras = sel.paragraphs;
-      ctx.load(paras, 'items');
-      return ctx.sync().then(function() {
-        for (var i = 0; i < paras.items.length; i++) {
-          var p = paras.items[i];
-          p.firstLineIndent = 0;
-          p.leftIndent      = 28.35;
-          p.rightIndent     = 28.35;
-          p.lineSpacing     = 12;
-          p.spaceBefore     = 0;
-          p.spaceAfter      = 0;
-          p.alignment       = Word.Alignment.justified;
+function doCit(){
+  Word.run(function(ctx){
+    var sel=ctx.document.getSelection();
+    ctx.load(sel,'text');
+    return ctx.sync().then(function(){
+      if(!sel.text||!sel.text.trim()){ msg('Selecione o texto da citação.',true); return ctx.sync(); }
+      var ps=sel.paragraphs;
+      ctx.load(ps,'items');
+      return ctx.sync().then(function(){
+        for(var i=0;i<ps.items.length;i++){
+          ps.items[i].firstLineIndent=0;
+          ps.items[i].leftIndent=28.35;
+          ps.items[i].rightIndent=28.35;
+          ps.items[i].lineSpacing=12;
+          ps.items[i].spaceBefore=0;
+          ps.items[i].spaceAfter=0;
+          ps.items[i].alignment=Word.Alignment.justified;
         }
         return ctx.sync();
       });
     });
-  }).then(function() {
-    msg('✓ Citação formatada!');
-  }).catch(function(e) { msg('Erro citação: ' + e.message, true); });
+  }).then(function(){ msg('✓ Citação formatada!'); })
+  .catch(function(e){ msg('Erro: '+e.message,true); });
+}
+
+function doJust(){
+  Word.run(function(ctx){
+    var sel=ctx.document.getSelection();
+    ctx.load(sel,'text');
+    return ctx.sync().then(function(){
+      var ps=(sel.text&&sel.text.trim())?sel.paragraphs:ctx.document.body.paragraphs;
+      ctx.load(ps,'items');
+      return ctx.sync().then(function(){
+        for(var i=0;i<ps.items.length;i++)
+          ps.items[i].alignment=Word.Alignment.justified;
+        return ctx.sync();
+      });
+    });
+  }).then(function(){ msg('✓ Texto justificado!'); })
+  .catch(function(e){ msg('Erro: '+e.message,true); });
+}
+
+// ── MARCAR ESPAÇOS EXCEDENTES ──
+// Simula quebra de linha, encontra a última palavra de cada linha
+// com espaço sobrando e colore em vermelho no Word
+function doAnalyze(){
+  Word.run(function(ctx){
+    var sel=ctx.document.getSelection();
+    ctx.load(sel,'text');
+    return ctx.sync().then(function(){
+      var ps=(sel.text&&sel.text.trim())?sel.paragraphs:ctx.document.body.paragraphs;
+      ctx.load(ps,'items');
+      return ctx.sync().then(function(){
+
+        // Processa cada parágrafo em sequência
+        var i=0;
+        var marked=0;
+        var spaceW=mw(' ');
+
+        function nextPara(){
+          if(i>=ps.items.length) return ctx.sync().then(function(){
+            msg(marked>0 ? '✓ '+marked+' linha(s) marcadas em vermelho!' : '✓ Nenhum espaço excedente encontrado.');
+          });
+
+          var p=ps.items[i++];
+          ctx.load(p,'text');
+          return ctx.sync().then(function(){
+            var text=p.text.replace(/[\r\n]/g,' ').replace(/\s+/g,' ').trim();
+            if(!text) return nextPara();
+
+            // Simula quebra de linha
+            var words=text.split(' ').filter(Boolean);
+            var lines=[], cur='';
+            for(var w=0;w<words.length;w++){
+              var test=cur?cur+' '+words[w]:words[w];
+              if(mw(test)<=LINE_PT){ cur=test; }
+              else{ if(cur) lines.push(cur); cur=words[w]; }
+            }
+            if(cur) lines.push(cur);
+
+            // Para cada linha não-final com espaço excedente
+            // busca a última palavra e colore em vermelho
+            var j=0;
+            function nextLine(){
+              if(j>=lines.length-1) return nextPara();
+              var line=lines[j];
+              var remaining=LINE_PT-mw(line);
+              j++;
+              if(remaining < spaceW*0.8) return nextLine();
+
+              // Última palavra da linha
+              var lw=line.split(' ');
+              var lastWord=lw[lw.length-1];
+              if(!lastWord) return nextLine();
+
+              // Busca essa palavra no parágrafo
+              var res=p.search(lastWord,{matchCase:false,matchWholeWord:true});
+              ctx.load(res,'items');
+              return ctx.sync().then(function(){
+                if(res.items.length>0){
+                  // Insere ! vermelho após a última palavra da linha
+                  var range=res.items[res.items.length-1];
+                  var end=range.getRange('End');
+                  end.insertText('!',Word.InsertLocation.after);
+                  // Busca o ! recém inserido e colore vermelho
+                  var bang=range.getRange('End');
+                  ctx.load(bang,'text');
+                  return ctx.sync().then(function(){
+                    var mark=p.search('!',{matchWildcards:false});
+                    ctx.load(mark,'items');
+                    return ctx.sync().then(function(){
+                      // Colore apenas o último ! encontrado após lastWord
+                      if(mark.items.length>0){
+                        mark.items[mark.items.length-1].font.color='#CC0000';
+                        mark.items[mark.items.length-1].font.bold=true;
+                      }
+                      marked++;
+                      return ctx.sync().then(nextLine);
+                    });
+                  });
+                }
+                return nextLine();
+              });
+            }
+            return nextLine();
+          });
+        }
+        return nextPara();
+      });
+    });
+  }).catch(function(e){ msg('Erro: '+e.message,true); });
+}
+
+// ── REMOVER MARCAÇÕES ──
+function doClearMark(){
+  Word.run(function(ctx){
+    var sel=ctx.document.getSelection();
+    ctx.load(sel,'text');
+    return ctx.sync().then(function(){
+      var target=(sel.text&&sel.text.trim())?sel:ctx.document.body;
+      // Busca todo texto colorido em vermelho e restaura
+      var found=target.search('*',{matchWildcards:true});
+      ctx.load(found,'items');
+      return ctx.sync().then(function(){
+        for(var i=0;i<found.items.length;i++)
+          found.items[i].font.color='automatic';
+        return ctx.sync();
+      });
+    });
+  }).then(function(){ msg('✓ Marcações removidas!'); })
+  .catch(function(e){
+    // fallback: reseta cor de todo o body
+    Word.run(function(ctx){
+      ctx.document.body.font.color='automatic';
+      return ctx.sync();
+    }).then(function(){ msg('✓ Marcações removidas!'); });
+  });
 }
 
 // ── REMOVER ESPAÇOS DUPLOS ──
-function doClean() {
-  Word.run(function(ctx) {
-    // Busca dois espaços consecutivos e substitui por um
-    // Repete 3x para pegar espaços triplos, quádruplos etc.
-    function replaceDoubles(n) {
-      var results = ctx.document.body.search('  ', { matchWildcards: false });
-      ctx.load(results, 'items');
-      return ctx.sync().then(function() {
-        if (results.items.length === 0) return ctx.sync();
-        for (var i = 0; i < results.items.length; i++) {
-          results.items[i].insertText(' ', Word.InsertLocation.replace);
-        }
-        return ctx.sync().then(function() {
-          if (n > 1) return replaceDoubles(n - 1);
-        });
+function doClean(){
+  Word.run(function(ctx){
+    function rep(n){
+      var r=ctx.document.body.search('  ',{matchWildcards:false});
+      ctx.load(r,'items');
+      return ctx.sync().then(function(){
+        if(!r.items.length) return ctx.sync();
+        for(var i=0;i<r.items.length;i++)
+          r.items[i].insertText(' ',Word.InsertLocation.replace);
+        return ctx.sync().then(function(){ if(n>1) return rep(n-1); });
       });
     }
-    return replaceDoubles(4);
-  }).then(function() {
-    msg('✓ Espaços duplos removidos!');
-  }).catch(function(e) { msg('Erro limpeza: ' + e.message, true); });
-}
-
-// ── ANÁLISE DE ESPAÇAMENTO — marca no Word ──
-function doAnalyze() {
-  Word.run(function(ctx) {
-    var sel = ctx.document.getSelection();
-    ctx.load(sel, 'text');
-    return ctx.sync().then(function() {
-
-      var useBody = !sel.text || !sel.text.trim();
-      var paras   = useBody ? ctx.document.body.paragraphs : sel.paragraphs;
-      ctx.load(paras, 'items');
-      return ctx.sync().then(function() {
-
-        var spaceWidth = measureText(' ');
-        var marked     = 0;
-        var promises   = [];
-
-        for (var pi = 0; pi < paras.items.length; pi++) {
-          (function(p) {
-            ctx.load(p, 'text');
-            promises.push(ctx.sync().then(function() {
-              var text  = p.text.trim();
-              if (!text) return;
-
-              // Simula quebra de linha
-              var words       = text.split(/\s+/).filter(function(w){ return w; });
-              var lines       = [];
-              var curLine     = '';
-
-              for (var i = 0; i < words.length; i++) {
-                var test = curLine ? curLine + ' ' + words[i] : words[i];
-                if (measureText(test) <= LINE_WIDTH_PT) {
-                  curLine = test;
-                } else {
-                  if (curLine) lines.push(curLine);
-                  curLine = words[i];
-                }
-              }
-              if (curLine) lines.push(curLine);
-
-              // Para cada linha não-final com espaço sobrando,
-              // busca a última palavra e marca o espaço após ela em vermelho
-              for (var li = 0; li < lines.length - 1; li++) {
-                var line      = lines[li];
-                var lineW     = measureText(line);
-                var remaining = LINE_WIDTH_PT - lineW;
-                if (remaining < spaceWidth * 0.5) continue;
-
-                // Pega a última palavra da linha
-                var lineWords   = line.split(' ');
-                var lastWord    = lineWords[lineWords.length - 1];
-                var nextWord    = lines[li + 1] ? lines[li + 1].split(' ')[0] : null;
-                if (!nextWord) continue;
-
-                // Busca o padrão "ultimaPalavra primeiraPalavraProxLinha" no parágrafo
-                // e insere marcador vermelho no espaço entre elas
-                var searchStr = lastWord + ' ' + nextWord;
-                var results   = p.search(searchStr, { matchCase: true, matchWholeWord: false });
-                ctx.load(results, 'items');
-                ctx.sync().then(function(rLine, rLastWord, rNextWord, rRemaining, rSpaceW) {
-                  return function() {
-                    if (!results.items.length) return;
-                    var range = results.items[0];
-                    // Divide o range: pega só o espaço entre as duas palavras
-                    // Insere um caractere de espaço vermelho usando font color
-                    var spaceRange = range.search(' ', { matchWildcards: false });
-                    ctx.load(spaceRange, 'items');
-                    return ctx.sync().then(function() {
-                      if (!spaceRange.items.length) return;
-                      var extraCount = Math.round(rRemaining / rSpaceW);
-                      spaceRange.items[0].font.color = '#FF0000';
-                      spaceRange.items[0].font.bold  = true;
-                      // Insere indicador visual: espaço + pequeno símbolo vermelho
-                      marked++;
-                    });
-                  };
-                }(li, lastWord, nextWord, remaining, spaceWidth));
-              }
-            }));
-          })(paras.items[pi]);
-        }
-
-        return Promise.all(promises).then(function() {
-          return ctx.sync();
-        });
-      });
-    });
-  }).then(function() {
-    msg('✓ Espaços excedentes marcados em vermelho no documento!');
-  }).catch(function(e) { msg('Erro análise: ' + e.message, true); });
-}
-
-// ── REMOVE MARCAÇÕES VERMELHAS ──
-// Restaura a cor do texto para automático em todo o doc ou seleção
-function doClearMark() {
-  Word.run(function(ctx) {
-    var sel = ctx.document.getSelection();
-    ctx.load(sel, 'text');
-    return ctx.sync().then(function() {
-      var target = (sel.text && sel.text.trim()) ? sel : ctx.document.body;
-      target.font.color = 'automatic';
-      target.font.bold  = false;
-      return ctx.sync();
-    });
-  }).then(function() {
-    msg('✓ Marcações removidas!');
-  }).catch(function(e) { msg('Erro: ' + e.message, true); });
+    return rep(5);
+  }).then(function(){ msg('✓ Espaços duplos removidos!'); })
+  .catch(function(e){ msg('Erro: '+e.message,true); });
 }
 
 // ── SINÔNIMOS ──
-function doSyn() {
-  var word = document.getElementById('synWord').value.trim();
-  if (!word) { msg('Digite uma palavra.', true); return; }
-  document.getElementById('synTags').innerHTML = '<span style="color:#aaa;font-size:11px">Buscando...</span>';
-
-  fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 200,
-      system: 'Responda APENAS JSON puro sem markdown: {"s":["p1","p2",...]} com 8 sinônimos em português.',
-      messages: [{ role: 'user', content: 'Sinônimos de: ' + word }]
+function doSyn(){
+  var word=document.getElementById('synWord').value.trim();
+  if(!word){ msg('Digite uma palavra.',true); return; }
+  document.getElementById('synTags').innerHTML='<span style="color:#aaa;font-size:11px">Buscando...</span>';
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:200,
+      system:'Responda APENAS JSON puro sem markdown: {"s":["p1","p2",...]} com 8 sinônimos em português.',
+      messages:[{role:'user',content:'Sinônimos de: '+word}]
     })
-  }).then(function(r) { return r.json(); })
-  .then(function(d) {
-    var txt = d.content[0].text.replace(/```json|```/g, '').trim();
-    var obj = JSON.parse(txt);
-    showSyn(obj.s || [], word);
-  }).catch(function() {
-    showSyn(['similar','análogo','equivalente','correlato','semelhante','afim','próximo','parecido'], word);
+  }).then(function(r){return r.json();})
+  .then(function(d){
+    var txt=d.content[0].text.replace(/```json|```/g,'').trim();
+    showSyn(JSON.parse(txt).s||[], word);
+  }).catch(function(){
+    showSyn(['similar','análogo','equivalente','correlato','semelhante','afim','próximo','parecido'],word);
   });
 }
-
-function showSyn(list, original) {
-  var wrap = document.getElementById('synTags');
-  wrap.innerHTML = '';
-  list.forEach(function(s) {
-    var t = document.createElement('span');
-    t.className = 'tag';
-    t.textContent = s;
-    t.onclick = function() { useSyn(s, original); };
-    wrap.appendChild(t);
+function showSyn(list,orig){
+  var w=document.getElementById('synTags');
+  w.innerHTML='';
+  list.forEach(function(s){
+    var t=document.createElement('span');
+    t.className='tag'; t.textContent=s;
+    t.onclick=function(){ useSyn(s,orig); };
+    w.appendChild(t);
   });
 }
-
-function useSyn(syn, original) {
-  Word.run(function(ctx) {
-    var sel = ctx.document.getSelection();
-    ctx.load(sel, 'text');
-    return ctx.sync().then(function() {
-      if (sel.text.trim().toLowerCase() === original.toLowerCase()) {
-        sel.insertText(syn, Word.InsertLocation.replace);
+function useSyn(syn,orig){
+  Word.run(function(ctx){
+    var sel=ctx.document.getSelection();
+    ctx.load(sel,'text');
+    return ctx.sync().then(function(){
+      if(sel.text.trim().toLowerCase()===orig.toLowerCase()){
+        sel.insertText(syn,Word.InsertLocation.replace);
         return ctx.sync();
       }
-      var results = ctx.document.body.search(original, { matchCase: false, matchWholeWord: true });
-      ctx.load(results, 'items');
-      return ctx.sync().then(function() {
-        if (results.items.length > 0) {
-          results.items[0].insertText(syn, Word.InsertLocation.replace);
-        }
+      var r=ctx.document.body.search(orig,{matchCase:false,matchWholeWord:true});
+      ctx.load(r,'items');
+      return ctx.sync().then(function(){
+        if(r.items.length) r.items[0].insertText(syn,Word.InsertLocation.replace);
         return ctx.sync();
       });
     });
-  }).then(function() {
-    msg('✓ ' + original + ' → ' + syn);
-  }).catch(function(e) { msg('Erro: ' + e.message, true); });
+  }).then(function(){ msg('✓ '+orig+' → '+syn); })
+  .catch(function(){ msg('Selecione a palavra no texto.',true); });
 }
 
 // ── SUBSTITUIR ──
-function doRep() {
-  var orig = document.getElementById('repOld').value.trim();
-  var sub  = document.getElementById('repNew').value.trim();
-  if (!orig || !sub) { msg('Preencha os dois campos.', true); return; }
-  Word.run(function(ctx) {
-    var results = ctx.document.body.search(orig, { matchCase: false, matchWholeWord: true });
-    ctx.load(results, 'items');
-    return ctx.sync().then(function() {
-      if (results.items.length === 0) { msg('Palavra não encontrada.', true); return ctx.sync(); }
-      results.items[0].insertText(sub, Word.InsertLocation.replace);
+function doRep(){
+  var o=document.getElementById('repOld').value.trim();
+  var n=document.getElementById('repNew').value.trim();
+  if(!o||!n){ msg('Preencha os dois campos.',true); return; }
+  Word.run(function(ctx){
+    var r=ctx.document.body.search(o,{matchCase:false,matchWholeWord:true});
+    ctx.load(r,'items');
+    return ctx.sync().then(function(){
+      if(!r.items.length){ msg('Palavra não encontrada.',true); return ctx.sync(); }
+      r.items[0].insertText(n,Word.InsertLocation.replace);
       return ctx.sync();
     });
-  }).then(function() {
-    msg('✓ Substituído com sucesso!');
-  }).catch(function(e) { msg('Erro: ' + e.message, true); });
+  }).then(function(){ msg('✓ Substituído!'); })
+  .catch(function(e){ msg('Erro: '+e.message,true); });
 }
 </script>
 </body>
