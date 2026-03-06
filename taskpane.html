@@ -91,84 +91,101 @@ document.getElementById('b3').onclick = function() {
 
 document.getElementById('b4').onclick = function() {
   Word.run(function(ctx) {
-    var sel = ctx.document.getSelection();
-    ctx.load(sel, 'text');
+    // Lê as margens e tamanho de página do documento
+    var sec = ctx.document.sections;
+    ctx.load(sec, 'items');
     return ctx.sync().then(function() {
-      var ps = (sel.text && sel.text.trim()) ? sel.paragraphs : ctx.document.body.paragraphs;
-      ctx.load(ps, 'items');
+      var s = sec.items[0];
+      ctx.load(s, 'bodyWidth, leftMargin, rightMargin');
       return ctx.sync().then(function() {
-        var bangW  = mw('!');
-        var marked = 0;
-        var pi     = 0;
+        // bodyWidth já é a largura do texto (página - margens), em pontos
+        // Desconta o recuo de primeira linha do parágrafo (1,25cm = 35.43pt)
+        var lineWidth = s.bodyWidth - 35.43;
+        log('Largura da linha: ' + Math.round(lineWidth) + 'pt — calculando...');
 
-        function nextPara() {
-          if (pi >= ps.items.length) {
-            return ctx.sync().then(function() {
-              log(marked > 0 ? 'OK: ' + marked + ' linha(s) marcadas.' : 'OK: Sem espaços excedentes.');
-            });
-          }
-          var p = ps.items[pi++];
-          ctx.load(p, 'text');
+        var sel = ctx.document.getSelection();
+        ctx.load(sel, 'text');
+        return ctx.sync().then(function() {
+          var ps = (sel.text && sel.text.trim()) ? sel.paragraphs : ctx.document.body.paragraphs;
+          ctx.load(ps, 'items');
           return ctx.sync().then(function() {
-            var raw = (p.text || '').replace(/[\r\n]+/g, ' ').replace(/ +/g, ' ').trim();
-            if (!raw) return nextPara();
+            var bangW  = mw('!');
+            var marked = 0;
+            var pi     = 0;
 
-            // Simula quebra de linha
-            var words = raw.split(' ').filter(Boolean);
-            var lines = [], cur = '';
-            for (var w = 0; w < words.length; w++) {
-              var test = cur ? cur + ' ' + words[w] : words[w];
-              if (mw(test) <= LINE_PT) { cur = test; }
-              else { if (cur) lines.push(cur); cur = words[w]; }
-            }
-            if (cur) lines.push(cur);
-
-            // Coleta linhas com espaço excedente
-            var targets = [];
-            for (var li = 0; li < lines.length - 1; li++) {
-              var rem = LINE_PT - mw(lines[li]);
-              if (rem >= bangW) {
-                var n = Math.floor(rem / bangW);
-                var anchor = lines[li].slice(-10).trim();
-                var bangs  = '';
-                for (var x = 0; x < n; x++) bangs += '!';
-                if (anchor && bangs) targets.push({ anchor: anchor, bangs: bangs });
-              }
-            }
-            if (!targets.length) return nextPara();
-
-            var ti = 0;
-            function nextTarget() {
-              if (ti >= targets.length) return nextPara();
-              var tgt = targets[ti++];
-
-              var res = p.search(tgt.anchor, { matchCase: false, matchWholeWord: false });
-              ctx.load(res, 'items');
-              return ctx.sync().then(function() {
-                if (!res.items.length) return nextTarget();
-
-                // Insere os ! após o final do anchor
-                res.items[res.items.length - 1].insertText(tgt.bangs, 'After');
+            function nextPara() {
+              if (pi >= ps.items.length) {
                 return ctx.sync().then(function() {
-
-                  // Busca anchor+bangs e colore de vermelho
-                  var find = p.search(tgt.anchor + tgt.bangs, { matchCase: false, matchWholeWord: false });
-                  ctx.load(find, 'items');
-                  return ctx.sync().then(function() {
-                    if (find.items.length) {
-                      find.items[find.items.length - 1].font.color = '#CC0000';
-                      find.items[find.items.length - 1].font.bold  = true;
-                    }
-                    marked++;
-                    return ctx.sync().then(nextTarget);
-                  });
+                  log(marked > 0 ? 'OK: ' + marked + ' linha(s) marcadas.' : 'OK: Sem espaços excedentes.');
                 });
+              }
+              var p = ps.items[pi++];
+              ctx.load(p, 'text, firstLineIndent, leftIndent');
+              return ctx.sync().then(function() {
+                var raw = (p.text || '').replace(/[
+]+/g, ' ').replace(/ +/g, ' ').trim();
+                if (!raw) return nextPara();
+
+                // Largura real da linha para este parágrafo
+                // (desconta recuo esquerdo e de primeira linha)
+                var paraWidth = s.bodyWidth
+                  - (p.leftIndent || 0)
+                  - (p.firstLineIndent > 0 ? p.firstLineIndent : 0);
+
+                // Simula quebra de linha
+                var words = raw.split(' ').filter(Boolean);
+                var lines = [], cur = '';
+                for (var w = 0; w < words.length; w++) {
+                  var test = cur ? cur + ' ' + words[w] : words[w];
+                  if (mw(test) <= paraWidth) { cur = test; }
+                  else { if (cur) lines.push(cur); cur = words[w]; }
+                }
+                if (cur) lines.push(cur);
+
+                // Coleta linhas com espaço excedente
+                var targets = [];
+                for (var li = 0; li < lines.length - 1; li++) {
+                  var rem = paraWidth - mw(lines[li]);
+                  if (rem >= bangW) {
+                    var n = Math.floor(rem / bangW);
+                    var anchor = lines[li].slice(-10).trim();
+                    var bangs  = '';
+                    for (var x = 0; x < n; x++) bangs += '!';
+                    if (anchor && bangs) targets.push({ anchor: anchor, bangs: bangs });
+                  }
+                }
+                if (!targets.length) return nextPara();
+
+                var ti = 0;
+                function nextTarget() {
+                  if (ti >= targets.length) return nextPara();
+                  var tgt = targets[ti++];
+
+                  var res = p.search(tgt.anchor, { matchCase: false, matchWholeWord: false });
+                  ctx.load(res, 'items');
+                  return ctx.sync().then(function() {
+                    if (!res.items.length) return nextTarget();
+                    res.items[res.items.length - 1].insertText(tgt.bangs, 'After');
+                    return ctx.sync().then(function() {
+                      var find = p.search(tgt.anchor + tgt.bangs, { matchCase: false, matchWholeWord: false });
+                      ctx.load(find, 'items');
+                      return ctx.sync().then(function() {
+                        if (find.items.length) {
+                          find.items[find.items.length - 1].font.color = '#CC0000';
+                          find.items[find.items.length - 1].font.bold  = true;
+                        }
+                        marked++;
+                        return ctx.sync().then(nextTarget);
+                      });
+                    });
+                  });
+                }
+                return nextTarget();
               });
             }
-            return nextTarget();
+            return nextPara();
           });
-        }
-        return nextPara();
+        });
       });
     });
   }).catch(function(e) { log('ERRO: ' + e.message); });
