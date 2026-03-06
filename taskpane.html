@@ -487,16 +487,12 @@ async function formatParagraphs() {
       await ctx.sync();
 
       paras.items.forEach(p => {
-        // 1.25cm = ~35.43pt, but Office.js uses points for indent
-        // 1.25cm ≈ 35.4pt
-        p.firstLineIndent = 35.4; // points (1.25cm)
-        p.lineSpacing = 18;       // 1.5 × 12pt base = 18pt
-        p.lineUnitAfter = 0;
-        p.lineUnitBefore = 0;
+        p.firstLineIndent = 35.4;   // 1.25cm em pontos
+        p.lineSpacingRule = "Multiple"; // string literal — evita bug do enum
+        p.lineSpacing = 18;          // 1.5 × 12pt = 18pt
         p.spaceAfter = 0;
         p.spaceBefore = 0;
-        p.lineSpacingRule = Word.LineSpacingRule.multiple;
-        p.lineSpacing = 1.5 * 12; // 18pt for 1.5x with 12pt font
+        p.alignment = "Justified";   // Alinhamento justificado
       });
 
       await ctx.sync();
@@ -515,30 +511,32 @@ async function formatQuotes() {
   try {
     await Word.run(async (ctx) => {
       const sel = ctx.document.getSelection();
-      sel.paragraphs.load('items');
+      sel.load('text');
+      const paras = sel.paragraphs;
+      paras.load('items');
       await ctx.sync();
 
-      const paras = sel.paragraphs.items;
-      if (!paras.length) {
+      if (!sel.text || !sel.text.trim()) {
         showToast('Selecione o trecho de citação primeiro.', 'info');
         return;
       }
 
       // 1cm ≈ 28.35pt
-      paras.forEach(p => {
-        p.leftIndent = 28.35;         // 1cm
-        p.rightIndent = 28.35;        // 1cm
+      paras.items.forEach(p => {
+        p.leftIndent = 28.35;
+        p.rightIndent = 28.35;
         p.firstLineIndent = 0;
-        p.lineSpacingRule = Word.LineSpacingRule.single;
+        p.lineSpacingRule = "Single"; // string literal — evita bug do enum
         p.spaceAfter = 0;
         p.spaceBefore = 8;
+        p.alignment = "Justified";   // Alinhamento justificado
       });
 
       await ctx.sync();
       showToast('✓ Citação formatada!', 'success');
     });
   } catch(e) {
-    showToast('Selecione o texto de citação primeiro.', 'error');
+    showToast('Erro: ' + e.message, 'error');
   }
 }
 
@@ -577,10 +575,11 @@ async function formatAll() {
 
       paras.items.forEach(p => {
         p.firstLineIndent = 35.4;
-        p.lineSpacingRule = Word.LineSpacingRule.multiple;
+        p.lineSpacingRule = "Multiple";
         p.lineSpacing = 18;
         p.spaceAfter = 0;
         p.spaceBefore = 0;
+        p.alignment = "Justified";
       });
 
       await ctx.sync();
