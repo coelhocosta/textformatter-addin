@@ -128,23 +128,32 @@ function doFont(){
 }
 
 // ── PARÁGRAFOS ──
+// Aplica formatação apenas no(s) parágrafo(s) selecionado(s)
 function doPara(){
   Word.run(function(ctx){
-    var ps = ctx.document.body.paragraphs;
-    ctx.load(ps,'items');
+    var sel = ctx.document.getSelection();
+    ctx.load(sel,'text');
     return ctx.sync().then(function(){
-      for(var i=0;i<ps.items.length;i++){
-        ps.items[i].firstLineIndent = 35.43;
-        ps.items[i].leftIndent      = 0;
-        ps.items[i].rightIndent     = 0;
-        ps.items[i].lineSpacing     = 18;
-        ps.items[i].spaceBefore     = 0;
-        ps.items[i].spaceAfter      = 0;
-        ps.items[i].alignment       = Word.Alignment.justified;
+      if(!sel.text||!sel.text.trim()){
+        log('Selecione o parágrafo primeiro.', true);
+        return ctx.sync();
       }
-      return ctx.sync();
+      var ps = sel.paragraphs;
+      ctx.load(ps,'items');
+      return ctx.sync().then(function(){
+        for(var i=0;i<ps.items.length;i++){
+          ps.items[i].firstLineIndent = 35.43;
+          ps.items[i].leftIndent      = 0;
+          ps.items[i].rightIndent     = 0;
+          ps.items[i].lineSpacing     = 18;
+          ps.items[i].spaceBefore     = 0;
+          ps.items[i].spaceAfter      = 0;
+          ps.items[i].alignment       = Word.Alignment.justified;
+        }
+        return ctx.sync();
+      });
     });
-  }).then(function(){ log('✓ Parágrafos formatados!'); })
+  }).then(function(){ log('✓ Parágrafo(s) formatado(s)!'); })
   .catch(function(e){ log('Erro: '+e.message, true); });
 }
 
@@ -193,6 +202,8 @@ function doJust(){
 }
 
 // ── MARCAR ESPAÇOS EXCEDENTES ──
+// Para cada parágrafo: simula quebra de linha, pega a última palavra
+// de cada linha não-final e insere um ! vermelho imediatamente após ela.
 function doAnalyze(){
   Word.run(function(ctx){
     var sel = ctx.document.getSelection();
@@ -208,7 +219,7 @@ function doAnalyze(){
         function procPara(){
           if(i>=ps.items.length){
             return ctx.sync().then(function(){
-              log(marked>0 ? '✓ '+marked+' linha(s) marcadas com ! vermelho!' : '✓ Sem espaços excedentes.');
+              log(marked>0 ? '✓ '+marked+' ! inseridos nas linhas com espaço excedente.' : '✓ Sem espaços excedentes.');
             });
           }
           var p = ps.items[i++];
@@ -217,7 +228,7 @@ function doAnalyze(){
             var text = (p.text||'').replace(/[\r\n]+/g,' ').replace(/ +/g,' ').trim();
             if(!text) return procPara();
 
-            // Simula quebra de linha
+            // Simula quebra de linha com canvas
             var words = text.split(' ').filter(Boolean);
             var lines = [], cur = '';
             for(var w=0;w<words.length;w++){
@@ -227,45 +238,58 @@ function doAnalyze(){
             }
             if(cur) lines.push(cur);
 
-            // Coleta últimas palavras das linhas com espaço excedente
-            var toMark = [];
+            // Monta lista: { lastWord, nextWord } para cada linha com espaço excedente
+            var targets = [];
             for(var li=0;li<lines.length-1;li++){
               var rem = LINE_PT - mw(lines[li]);
-              if(rem >= spaceW*0.8){
+              if(rem >= spaceW*0.5){
                 var ws = lines[li].split(' ');
-                toMark.push(ws[ws.length-1]);
+                var nws = lines[li+1].split(' ');
+                targets.push({
+                  last: ws[ws.length-1],
+                  next: nws[0]
+                });
               }
             }
-            if(!toMark.length) return procPara();
+            if(!targets.length) return procPara();
 
-            // Insere ! vermelho após cada palavra marcada
+            // Para cada target: busca "lastWord nextWord" no parágrafo
+            // e insere ! entre eles (após lastWord)
             var j = 0;
-            function procWord(){
-              if(j>=toMark.length) return procPara();
-              var word = toMark[j++];
-              if(!word) return procWord();
+            function procTarget(){
+              if(j>=targets.length) return procPara();
+              var tgt = targets[j++];
+              if(!tgt.last||!tgt.next) return procTarget();
 
-              var res = p.search(word, {matchCase:false, matchWholeWord:true});
+              // Busca o par "última palavra da linha + primeira da próxima"
+              // para localizar precisamente onde inserir o !
+              var searchStr = tgt.last + ' ' + tgt.next;
+              var res = p.search(searchStr, {matchCase:false, matchWholeWord:false});
               ctx.load(res,'items');
               return ctx.sync().then(function(){
-                if(!res.items.length) return procWord();
-                var range = res.items[res.items.length-1];
-                range.insertText('!', 'After');
+                if(!res.items.length) return procTarget();
+
+                // Substitui "lastWord nextWord" por "lastWord! nextWord"
+                // assim o ! fica exatamente após a última palavra da linha
+                var replacement = tgt.last + '! ' + tgt.next;
+                res.items[0].insertText(replacement, Word.InsertLocation.replace);
                 return ctx.sync().then(function(){
-                  var bang = p.search(word+'!', {matchCase:false, matchWholeWord:false});
-                  ctx.load(bang,'items');
+
+                  // Agora busca "lastWord!" e colore apenas o ! em vermelho
+                  var bangSearch = p.search(tgt.last+'!', {matchCase:false, matchWholeWord:false});
+                  ctx.load(bangSearch,'items');
                   return ctx.sync().then(function(){
-                    if(bang.items.length){
-                      bang.items[bang.items.length-1].font.color = '#CC0000';
-                      bang.items[bang.items.length-1].font.bold  = true;
+                    for(var k=0;k<bangSearch.items.length;k++){
+                      bangSearch.items[k].font.color = '#CC0000';
+                      bangSearch.items[k].font.bold  = true;
                     }
                     marked++;
-                    return ctx.sync().then(procWord);
+                    return ctx.sync().then(procTarget);
                   });
                 });
               });
             }
-            return procWord();
+            return procTarget();
           });
         }
         return procPara();
