@@ -486,38 +486,38 @@ async function formatParagraphs() {
       await ctx.sync();
 
       for (const p of paras.items) {
-        // Usa OOXML para garantir compatibilidade com Word for Mac
+        // Limpa espaços extras do texto antes de formatar
+        p.load('text');
+        await ctx.sync();
+
+        // Remove espaços duplos entre palavras e espaços no final
+        const cleanText = p.text
+          .replace(/[ \t]+/g, ' ')        // múltiplos espaços → 1 espaço
+          .replace(/[ \t]+$/gm, '')        // remove espaço no final de cada linha
+          .replace(/[ \t]+([\r\n])/g, '$1'); // espaço antes de quebra de linha
+
+        if (cleanText !== p.text) {
+          p.insertText(cleanText, 'Replace');
+        }
+
+        // OOXML:
+        // jc:both        = justificado
+        // ind firstLine  = 709 twips (1,25cm)
+        // spacing before = 0, after = 0
+        // spacing line   = 360 / auto = espaçamento 1,5
         const ooxml = `<w:pPr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
           <w:jc w:val="both"/>
           <w:ind w:firstLine="709"/>
           <w:spacing w:line="360" w:lineRule="auto" w:before="0" w:after="0"/>
         </w:pPr>`;
-        p.insertOoxml(ooxml, "Replace");
+        p.insertOoxml(ooxml, 'Replace');
       }
 
       await ctx.sync();
       showToast('✓ Parágrafos formatados!', 'success');
     });
   } catch(e) {
-    // Fallback: tenta via propriedades diretas
-    try {
-      await Word.run(async (ctx) => {
-        const paras = ctx.document.body.paragraphs;
-        paras.load('items');
-        await ctx.sync();
-        paras.items.forEach(p => {
-          p.firstLineIndent = 35.4;
-          p.lineSpacing = 18;
-          p.spaceAfter = 0;
-          p.spaceBefore = 0;
-          p.alignment = Word.Alignment.justified;
-        });
-        await ctx.sync();
-        showToast('✓ Parágrafos formatados!', 'success');
-      });
-    } catch(e2) {
-      showToast('Erro: ' + e2.message, 'error');
-    }
+    showToast('Erro parágrafo: ' + e.message, 'error');
   }
 }
 
@@ -540,21 +540,36 @@ async function formatQuotes() {
       }
 
       for (const p of paras.items) {
-        // OOXML: recuo 1cm esq/dir, espaçamento simples, justificado
-        // 1cm = 567 twips, espaçamento simples = 240
+        p.load('text');
+        await ctx.sync();
+
+        // Remove espaços duplos entre palavras e espaços no final de linha
+        const cleanText = p.text
+          .replace(/[ \t]+/g, ' ')
+          .replace(/[ \t]+$/gm, '')
+          .replace(/[ \t]+([\r\n])/g, '$1');
+
+        if (cleanText !== p.text) {
+          p.insertText(cleanText, 'Replace');
+        }
+
+        // OOXML:
+        // jc:both      = justificado
+        // ind left/right = 567 twips (1cm) cada lado, sem recuo de primeira linha
+        // spacing before = 0, after = 0, line = 240/auto = simples
         const ooxml = `<w:pPr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
           <w:jc w:val="both"/>
           <w:ind w:left="567" w:right="567" w:firstLine="0"/>
-          <w:spacing w:line="240" w:lineRule="auto" w:before="113" w:after="0"/>
+          <w:spacing w:line="240" w:lineRule="auto" w:before="0" w:after="0"/>
         </w:pPr>`;
-        p.insertOoxml(ooxml, "Replace");
+        p.insertOoxml(ooxml, 'Replace');
       }
 
       await ctx.sync();
       showToast('✓ Citação formatada!', 'success');
     });
   } catch(e) {
-    showToast('Erro: ' + e.message, 'error');
+    showToast('Erro citação: ' + e.message, 'error');
   }
 }
 
@@ -590,12 +605,24 @@ async function formatAll() {
       await ctx.sync();
 
       for (const p of paras.items) {
+        p.load('text');
+        await ctx.sync();
+
+        const cleanText = p.text
+          .replace(/[ \t]+/g, ' ')
+          .replace(/[ \t]+$/gm, '')
+          .replace(/[ \t]+([\r\n])/g, '$1');
+
+        if (cleanText !== p.text) {
+          p.insertText(cleanText, 'Replace');
+        }
+
         const ooxml = `<w:pPr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
           <w:jc w:val="both"/>
           <w:ind w:firstLine="709"/>
           <w:spacing w:line="360" w:lineRule="auto" w:before="0" w:after="0"/>
         </w:pPr>`;
-        p.insertOoxml(ooxml, "Replace");
+        p.insertOoxml(ooxml, 'Replace');
       }
 
       await ctx.sync();
