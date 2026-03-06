@@ -478,16 +478,29 @@ async function checkSelection() {
 // HELPERS
 // ============================================================
 
-// Limpa o texto de um parágrafo:
-// - múltiplos espaços/tabs entre palavras → 1 espaço
-// - espaços/tabs no final de cada linha   → removidos
-function cleanParaText(text) {
-  return text
-    .split('
-')
-    .map(line => line.replace(/[ 	]+/g, ' ').trimEnd())
-    .join('
-');
+// Limpa espaços duplos e tabulações no documento via search/replace seguro
+// NÃO usa insertText em parágrafos inteiros (corrompe o doc)
+async function cleanDocSpaces(ctx, scope) {
+  // Remove tabulações → espaço simples
+  try {
+    const tabs = scope.search('\t', { matchWildcards: false });
+    tabs.load('items');
+    await ctx.sync();
+    for (const r of tabs.items) r.insertText(' ', 'Replace');
+    await ctx.sync();
+  } catch(e) {}
+
+  // Remove espaços duplos repetindo até não restar nenhum
+  for (let i = 0; i < 5; i++) {
+    try {
+      const doubles = scope.search('  ', { matchWildcards: false });
+      doubles.load('items');
+      await ctx.sync();
+      if (!doubles.items.length) break;
+      for (const r of doubles.items) r.insertText(' ', 'Replace');
+      await ctx.sync();
+    } catch(e) { break; }
+  }
 }
 
 // ============================================================
@@ -497,24 +510,22 @@ function cleanParaText(text) {
 async function formatParagraphs() {
   try {
     await Word.run(async (ctx) => {
+      // 1) Limpa tabs e espaços duplos de forma segura
+      await cleanDocSpaces(ctx, ctx.document.body);
+
+      // 2) Aplica formatação nos parágrafos
       const paras = ctx.document.body.paragraphs;
-      paras.load('items, text, firstLineIndent, lineSpacing, spaceAfter, spaceBefore, alignment');
+      paras.load('items');
       await ctx.sync();
 
       for (const p of paras.items) {
-        // 1) Limpa espaços extras do texto
-        const clean = cleanParaText(p.text);
-        if (clean !== p.text) {
-          p.insertText(clean, 'Replace');
-          await ctx.sync();
-        }
-
-        // 2) Aplica formatação via propriedades diretas
-        p.firstLineIndent = 35.4;   // 1,25cm em pontos (1pt = 0,03527cm)
-        p.lineSpacing     = 18;     // 1,5 × 12pt = 18pt
+        p.firstLineIndent = 35.4;   // 1,25cm
+        p.leftIndent      = 0;
+        p.rightIndent     = 0;
+        p.lineSpacing     = 18;     // 1,5x
         p.spaceBefore     = 0;
         p.spaceAfter      = 0;
-        p.alignment       = 'Justified';
+        p.alignment       = Word.Alignment.justified;
       }
 
       await ctx.sync();
@@ -532,7 +543,6 @@ async function formatParagraphs() {
 async function formatQuotes() {
   try {
     await Word.run(async (ctx) => {
-      // Carrega seleção e seus parágrafos separadamente
       const sel = ctx.document.getSelection();
       sel.load('text');
       await ctx.sync();
@@ -542,26 +552,22 @@ async function formatQuotes() {
         return;
       }
 
+      // 1) Limpa tabs e espaços duplos na seleção
+      await cleanDocSpaces(ctx, sel);
+
+      // 2) Recarrega parágrafos após limpeza
       const paras = sel.paragraphs;
-      paras.load('items, text');
+      paras.load('items');
       await ctx.sync();
 
       for (const p of paras.items) {
-        // 1) Limpa espaços extras
-        const clean = cleanParaText(p.text);
-        if (clean !== p.text) {
-          p.insertText(clean, 'Replace');
-          await ctx.sync();
-        }
-
-        // 2) Aplica formatação
-        p.leftIndent      = 28.35;  // 1cm em pontos
-        p.rightIndent     = 28.35;  // 1cm em pontos
-        p.firstLineIndent = 0;      // sem recuo na primeira linha
-        p.lineSpacing     = 12;     // espaçamento simples = tamanho da fonte
+        p.firstLineIndent = 0;       // sem recuo — texto começa à esquerda do recuo
+        p.leftIndent      = 28.35;   // 1cm
+        p.rightIndent     = 28.35;   // 1cm
+        p.lineSpacing     = 12;      // simples
         p.spaceBefore     = 0;
         p.spaceAfter      = 0;
-        p.alignment       = 'Justified';
+        p.alignment       = Word.Alignment.justified;
       }
 
       await ctx.sync();
@@ -597,27 +603,26 @@ async function formatAll() {
     await Word.run(async (ctx) => {
       const body = ctx.document.body;
 
-      // Fonte global
+      // 1) Fonte global
       body.font.name = 'Helvetica Neue';
       body.font.size = 12;
 
+      // 2) Limpa tabs e espaços duplos
+      await cleanDocSpaces(ctx, body);
+
+      // 3) Formata parágrafos
       const paras = body.paragraphs;
-      paras.load('items, text');
+      paras.load('items');
       await ctx.sync();
 
       for (const p of paras.items) {
-        // Limpa espaços
-        const clean = cleanParaText(p.text);
-        if (clean !== p.text) {
-          p.insertText(clean, 'Replace');
-          await ctx.sync();
-        }
-
         p.firstLineIndent = 35.4;
+        p.leftIndent      = 0;
+        p.rightIndent     = 0;
         p.lineSpacing     = 18;
         p.spaceBefore     = 0;
         p.spaceAfter      = 0;
-        p.alignment       = 'Justified';
+        p.alignment       = Word.Alignment.justified;
       }
 
       await ctx.sync();
