@@ -97,13 +97,10 @@ input:focus { outline: none; border-color: #4a4ae8; }
 <!-- ANÁLISE DE LINHAS -->
 <div class="section">
   <div class="sec-title">Análise de Espaçamento</div>
-  <button class="b5" id="btnAnalyze">🔍  Analisar Espaços do Parágrafo</button>
+  <button class="b5" id="btnAnalyze">🔍  Marcar Espaços no Word</button>
+  <button class="b4" id="btnClearMark" style="background:#999">✕  Remover Marcações</button>
   <button class="b4" id="btnClean">✂  Remover Espaços Duplos</button>
-  <div id="analysisStats"></div>
-  <div id="analysisBox">
-    <h4>Linhas com espaços excedentes marcados em <span style="color:#e84a4a">vermelho</span>:</h4>
-    <div id="analysisLines"></div>
-  </div>
+
 </div>
 
 <!-- SINÔNIMOS -->
@@ -156,7 +153,8 @@ Office.initialize = function() {
   document.getElementById('btnCit').onclick     = doCit;
   document.getElementById('btnFont').onclick    = doFont;
   document.getElementById('btnJust').onclick    = doJust;
-  document.getElementById('btnAnalyze').onclick = doAnalyze;
+  document.getElementById('btnAnalyze').onclick    = doAnalyze;
+  document.getElementById('btnClearMark').onclick  = doClearMark;
   document.getElementById('btnClean').onclick   = doClean;
   document.getElementById('btnSyn').onclick     = doSyn;
   document.getElementById('btnRep').onclick     = doRep;
@@ -308,105 +306,112 @@ function doClean() {
   }).catch(function(e) { msg('Erro limpeza: ' + e.message, true); });
 }
 
-// ── ANÁLISE DE ESPAÇAMENTO ──
+// ── ANÁLISE DE ESPAÇAMENTO — marca no Word ──
 function doAnalyze() {
   Word.run(function(ctx) {
-    // Pega o parágrafo selecionado ou o primeiro parágrafo
     var sel = ctx.document.getSelection();
-    ctx.load(sel, 'text, paragraphs');
+    ctx.load(sel, 'text');
     return ctx.sync().then(function() {
-      var text = sel.text.trim();
-      if (!text) {
-        // sem seleção, pega o corpo inteiro
-        var body = ctx.document.body;
-        ctx.load(body, 'text');
-        return ctx.sync().then(function() {
-          analyzeText(body.text);
+
+      var useBody = !sel.text || !sel.text.trim();
+      var paras   = useBody ? ctx.document.body.paragraphs : sel.paragraphs;
+      ctx.load(paras, 'items');
+      return ctx.sync().then(function() {
+
+        var spaceWidth = measureText(' ');
+        var marked     = 0;
+        var promises   = [];
+
+        for (var pi = 0; pi < paras.items.length; pi++) {
+          (function(p) {
+            ctx.load(p, 'text');
+            promises.push(ctx.sync().then(function() {
+              var text  = p.text.trim();
+              if (!text) return;
+
+              // Simula quebra de linha
+              var words       = text.split(/\s+/).filter(function(w){ return w; });
+              var lines       = [];
+              var curLine     = '';
+
+              for (var i = 0; i < words.length; i++) {
+                var test = curLine ? curLine + ' ' + words[i] : words[i];
+                if (measureText(test) <= LINE_WIDTH_PT) {
+                  curLine = test;
+                } else {
+                  if (curLine) lines.push(curLine);
+                  curLine = words[i];
+                }
+              }
+              if (curLine) lines.push(curLine);
+
+              // Para cada linha não-final com espaço sobrando,
+              // busca a última palavra e marca o espaço após ela em vermelho
+              for (var li = 0; li < lines.length - 1; li++) {
+                var line      = lines[li];
+                var lineW     = measureText(line);
+                var remaining = LINE_WIDTH_PT - lineW;
+                if (remaining < spaceWidth * 0.5) continue;
+
+                // Pega a última palavra da linha
+                var lineWords   = line.split(' ');
+                var lastWord    = lineWords[lineWords.length - 1];
+                var nextWord    = lines[li + 1] ? lines[li + 1].split(' ')[0] : null;
+                if (!nextWord) continue;
+
+                // Busca o padrão "ultimaPalavra primeiraPalavraProxLinha" no parágrafo
+                // e insere marcador vermelho no espaço entre elas
+                var searchStr = lastWord + ' ' + nextWord;
+                var results   = p.search(searchStr, { matchCase: true, matchWholeWord: false });
+                ctx.load(results, 'items');
+                ctx.sync().then(function(rLine, rLastWord, rNextWord, rRemaining, rSpaceW) {
+                  return function() {
+                    if (!results.items.length) return;
+                    var range = results.items[0];
+                    // Divide o range: pega só o espaço entre as duas palavras
+                    // Insere um caractere de espaço vermelho usando font color
+                    var spaceRange = range.search(' ', { matchWildcards: false });
+                    ctx.load(spaceRange, 'items');
+                    return ctx.sync().then(function() {
+                      if (!spaceRange.items.length) return;
+                      var extraCount = Math.round(rRemaining / rSpaceW);
+                      spaceRange.items[0].font.color = '#FF0000';
+                      spaceRange.items[0].font.bold  = true;
+                      // Insere indicador visual: espaço + pequeno símbolo vermelho
+                      marked++;
+                    });
+                  };
+                }(li, lastWord, nextWord, remaining, spaceWidth));
+              }
+            }));
+          })(paras.items[pi]);
+        }
+
+        return Promise.all(promises).then(function() {
+          return ctx.sync();
         });
-      }
-      analyzeText(text);
+      });
     });
+  }).then(function() {
+    msg('✓ Espaços excedentes marcados em vermelho no documento!');
   }).catch(function(e) { msg('Erro análise: ' + e.message, true); });
 }
 
-function analyzeText(fullText) {
-  // Quebra o texto em palavras e simula quebra de linha
-  // com base na largura real medida pelo canvas
-  var words = fullText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split(/\s+/).filter(function(w) { return w.length > 0; });
-
-  var lines       = [];
-  var currentLine = '';
-  var spaceWidth  = measureText(' ');
-
-  for (var i = 0; i < words.length; i++) {
-    var word     = words[i];
-    var testLine = currentLine ? currentLine + ' ' + word : word;
-    var testW    = measureText(testLine);
-
-    if (testW <= LINE_WIDTH_PT) {
-      currentLine = testLine;
-    } else {
-      if (currentLine) lines.push(currentLine);
-      currentLine = word;
-    }
-  }
-  if (currentLine) lines.push(currentLine);
-
-  // Para cada linha (exceto a última), calcula o espaço sobrando
-  var box      = document.getElementById('analysisBox');
-  var linesDiv = document.getElementById('analysisLines');
-  var statsDiv = document.getElementById('analysisStats');
-  linesDiv.innerHTML = '';
-
-  var totalExcess  = 0;
-  var linesWithGap = 0;
-
-  for (var li = 0; li < lines.length; li++) {
-    var line      = lines[li];
-    var lineW     = measureText(line);
-    var remaining = LINE_WIDTH_PT - lineW;
-    var isLast    = (li === lines.length - 1);
-    var div       = document.createElement('div');
-    div.className = 'line-row';
-
-    var numSpan = document.createElement('span');
-    numSpan.className = 'line-num';
-    numSpan.textContent = (li + 1) + '.';
-    div.appendChild(numSpan);
-
-    var textNode = document.createTextNode(line);
-    div.appendChild(textNode);
-
-    // Calcula quantos espaços extra cabem no final
-    if (!isLast && remaining > spaceWidth * 0.5) {
-      var extraSpaces = Math.round(remaining / spaceWidth);
-      if (extraSpaces > 0) {
-        linesWithGap++;
-        totalExcess += extraSpaces;
-        var exSpan = document.createElement('span');
-        exSpan.className = 'excess';
-        // Mostra os espaços como ░ para visualização
-        exSpan.textContent = ' ' + '░'.repeat(extraSpaces) + ' (+' + extraSpaces + ' espaços)';
-        div.appendChild(exSpan);
-      }
-    }
-
-    linesDiv.appendChild(div);
-  }
-
-  // Estatísticas
-  statsDiv.innerHTML =
-    '<strong>' + lines.length + '</strong> linhas analisadas &nbsp;|&nbsp; ' +
-    '<strong style="color:#e84a4a">' + linesWithGap + '</strong> linhas com espaço excedente &nbsp;|&nbsp; ' +
-    'Total: <strong style="color:#e84a4a">+' + totalExcess + '</strong> espaços';
-  statsDiv.style.display = 'block';
-  box.style.display = 'block';
-
-  if (linesWithGap === 0) {
-    msg('✓ Nenhum espaço excedente encontrado!');
-  } else {
-    msg(linesWithGap + ' linha(s) com espaço excedente marcadas em vermelho.', false);
-  }
+// ── REMOVE MARCAÇÕES VERMELHAS ──
+// Restaura a cor do texto para automático em todo o doc ou seleção
+function doClearMark() {
+  Word.run(function(ctx) {
+    var sel = ctx.document.getSelection();
+    ctx.load(sel, 'text');
+    return ctx.sync().then(function() {
+      var target = (sel.text && sel.text.trim()) ? sel : ctx.document.body;
+      target.font.color = 'automatic';
+      target.font.bold  = false;
+      return ctx.sync();
+    });
+  }).then(function() {
+    msg('✓ Marcações removidas!');
+  }).catch(function(e) { msg('Erro: ' + e.message, true); });
 }
 
 // ── SINÔNIMOS ──
