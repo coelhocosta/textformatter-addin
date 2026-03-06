@@ -184,8 +184,8 @@ function doJust(){
 }
 
 // ── MARCAR ESPAÇOS EXCEDENTES ──
-// Simula quebra de linha, encontra a última palavra de cada linha
-// com espaço sobrando e colore em vermelho no Word
+// Simula quebra de linha com canvas, encontra a última palavra
+// de cada linha com espaço sobrando e insere um ! vermelho após ela
 function doAnalyze(){
   Word.run(function(ctx){
     var sel=ctx.document.getSelection();
@@ -195,20 +195,18 @@ function doAnalyze(){
       ctx.load(ps,'items');
       return ctx.sync().then(function(){
 
-        // Processa cada parágrafo em sequência
-        var i=0;
-        var marked=0;
-        var spaceW=mw(' ');
+        var i=0, marked=0, spaceW=mw(' ');
 
         function nextPara(){
-          if(i>=ps.items.length) return ctx.sync().then(function(){
-            msg(marked>0 ? '✓ '+marked+' linha(s) marcadas em vermelho!' : '✓ Nenhum espaço excedente encontrado.');
-          });
-
+          if(i>=ps.items.length){
+            return ctx.sync().then(function(){
+              msg(marked>0 ? '✓ '+marked+' linha(s) marcadas com ! vermelho!' : '✓ Sem espaços excedentes.');
+            });
+          }
           var p=ps.items[i++];
           ctx.load(p,'text');
           return ctx.sync().then(function(){
-            var text=p.text.replace(/[\r\n]/g,' ').replace(/\s+/g,' ').trim();
+            var text=p.text.replace(/[\r\n]/g,' ').replace(/  +/g,' ').trim();
             if(!text) return nextPara();
 
             // Simula quebra de linha
@@ -221,51 +219,64 @@ function doAnalyze(){
             }
             if(cur) lines.push(cur);
 
-            // Para cada linha não-final com espaço excedente
-            // busca a última palavra e colore em vermelho
-            var j=0;
-            function nextLine(){
-              if(j>=lines.length-1) return nextPara();
-              var line=lines[j];
-              var remaining=LINE_PT-mw(line);
-              j++;
-              if(remaining < spaceW*0.8) return nextLine();
-
-              // Última palavra da linha
-              var lw=line.split(' ');
+            // Coleta as últimas palavras das linhas com espaço excedente
+            var targets=[];
+            for(var li=0;li<lines.length-1;li++){
+              var rem=LINE_PT-mw(lines[li]);
+              if(rem<spaceW*0.8) continue;
+              var lw=lines[li].split(' ');
               var lastWord=lw[lw.length-1];
-              if(!lastWord) return nextLine();
+              // Pega também a primeira palavra da próxima linha para contexto único
+              var nextFirst=lines[li+1].split(' ')[0];
+              targets.push({ last: lastWord, next: nextFirst });
+            }
 
-              // Busca essa palavra no parágrafo
-              var res=p.search(lastWord,{matchCase:false,matchWholeWord:true});
+            if(!targets.length) return nextPara();
+
+            // Processa cada target em sequência
+            var t=0;
+            function nextTarget(){
+              if(t>=targets.length) return nextPara();
+              var tgt=targets[t++];
+              // Busca "ultimaPalavra primeiraPalavraProxLinha" para localização precisa
+              var searchStr=tgt.last+' '+tgt.next;
+              var res=p.search(searchStr,{matchCase:false,matchWholeWord:false});
               ctx.load(res,'items');
               return ctx.sync().then(function(){
-                if(res.items.length>0){
-                  // Insere ! vermelho após a última palavra da linha
-                  var range=res.items[res.items.length-1];
-                  var end=range.getRange('End');
-                  end.insertText('!',Word.InsertLocation.after);
-                  // Busca o ! recém inserido e colore vermelho
-                  var bang=range.getRange('End');
-                  ctx.load(bang,'text');
+                if(!res.items.length) return nextTarget();
+                // Pega o range da última palavra (sem o espaço e próxima palavra)
+                var fullRange=res.items[0];
+                // getRange('End') = cursor no final do range encontrado
+                // Retrocede para o final de tgt.last: posição = tgt.last.length
+                var wordRange=p.search(tgt.last,{matchCase:false,matchWholeWord:true});
+                ctx.load(wordRange,'items');
+                return ctx.sync().then(function(){
+                  // Usa o range do searchStr e insere ! logo após tgt.last
+                  // Divide o range: os primeiros tgt.last.length chars = a palavra
+                  if(!wordRange.items.length) return nextTarget();
+                  // Encontra a ocorrência correta comparando posição
+                  // Insere ! após o range completo da busca dupla, antes do espaço
+                  fullRange.insertText(tgt.last+'!'+' '+tgt.next, Word.InsertLocation.replace);
+                  marked++;
                   return ctx.sync().then(function(){
-                    var mark=p.search('!',{matchWildcards:false});
-                    ctx.load(mark,'items');
+                    // Agora colore o ! vermelho
+                    // Busca "last!" no parágrafo
+                    var bangSearch=p.search(tgt.last+'!',{matchCase:false,matchWholeWord:false});
+                    ctx.load(bangSearch,'items');
                     return ctx.sync().then(function(){
-                      // Colore apenas o último ! encontrado após lastWord
-                      if(mark.items.length>0){
-                        mark.items[mark.items.length-1].font.color='#CC0000';
-                        mark.items[mark.items.length-1].font.bold=true;
+                      if(bangSearch.items.length){
+                        // Pega só o caractere ! (último char do range)
+                        var bangRange=bangSearch.items[bangSearch.items.length-1];
+                        bangRange.font.color='#CC0000';
+                        bangRange.font.bold=true;
                       }
-                      marked++;
-                      return ctx.sync().then(nextLine);
+                      return ctx.sync().then(nextTarget);
                     });
                   });
-                }
-                return nextLine();
+                });
               });
             }
-            return nextLine();
+            return nextTarget();
           });
         }
         return nextPara();
@@ -275,29 +286,32 @@ function doAnalyze(){
 }
 
 // ── REMOVER MARCAÇÕES ──
+// Remove todos os ! vermelhos inseridos pela análise
 function doClearMark(){
   Word.run(function(ctx){
     var sel=ctx.document.getSelection();
     ctx.load(sel,'text');
     return ctx.sync().then(function(){
       var target=(sel.text&&sel.text.trim())?sel:ctx.document.body;
-      // Busca todo texto colorido em vermelho e restaura
-      var found=target.search('*',{matchWildcards:true});
+      // Busca todos os ! vermelhos (font.color vermelho) e remove
+      var found=target.search('!',{matchWildcards:false});
       ctx.load(found,'items');
       return ctx.sync().then(function(){
-        for(var i=0;i<found.items.length;i++)
-          found.items[i].font.color='automatic';
-        return ctx.sync();
+        for(var i=0;i<found.items.length;i++){
+          ctx.load(found.items[i],'font/color');
+        }
+        return ctx.sync().then(function(){
+          for(var i=0;i<found.items.length;i++){
+            if(found.items[i].font.color==='#CC0000'||found.items[i].font.color==='CC0000'){
+              found.items[i].insertText('',Word.InsertLocation.replace);
+            }
+          }
+          return ctx.sync();
+        });
       });
     });
   }).then(function(){ msg('✓ Marcações removidas!'); })
-  .catch(function(e){
-    // fallback: reseta cor de todo o body
-    Word.run(function(ctx){
-      ctx.document.body.font.color='automatic';
-      return ctx.sync();
-    }).then(function(){ msg('✓ Marcações removidas!'); });
-  });
+  .catch(function(e){ msg('Erro: '+e.message,true); });
 }
 
 // ── REMOVER ESPAÇOS DUPLOS ──
