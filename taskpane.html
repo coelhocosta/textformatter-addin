@@ -475,42 +475,46 @@ async function checkSelection() {
 }
 
 // ============================================================
+// HELPERS
+// ============================================================
+
+// Limpa o texto de um parágrafo:
+// - múltiplos espaços/tabs entre palavras → 1 espaço
+// - espaços/tabs no final de cada linha   → removidos
+function cleanParaText(text) {
+  return text
+    .split('
+')
+    .map(line => line.replace(/[ 	]+/g, ' ').trimEnd())
+    .join('
+');
+}
+
+// ============================================================
 // FORMAT PARAGRAPHS
-// 1.25cm indent, 1.5 line spacing
+// Recuo 1,25cm · Espaçamento 1,5 · Justificado · Esp. antes/depois = 0
 // ============================================================
 async function formatParagraphs() {
   try {
     await Word.run(async (ctx) => {
       const paras = ctx.document.body.paragraphs;
-      paras.load('items');
+      paras.load('items, text, firstLineIndent, lineSpacing, spaceAfter, spaceBefore, alignment');
       await ctx.sync();
 
       for (const p of paras.items) {
-        // Limpa espaços extras do texto antes de formatar
-        p.load('text');
-        await ctx.sync();
-
-        // Remove espaços duplos entre palavras e espaços no final
-        const cleanText = p.text
-          .replace(/[ \t]+/g, ' ')        // múltiplos espaços → 1 espaço
-          .replace(/[ \t]+$/gm, '')        // remove espaço no final de cada linha
-          .replace(/[ \t]+([\r\n])/g, '$1'); // espaço antes de quebra de linha
-
-        if (cleanText !== p.text) {
-          p.insertText(cleanText, 'Replace');
+        // 1) Limpa espaços extras do texto
+        const clean = cleanParaText(p.text);
+        if (clean !== p.text) {
+          p.insertText(clean, 'Replace');
+          await ctx.sync();
         }
 
-        // OOXML:
-        // jc:both        = justificado
-        // ind firstLine  = 709 twips (1,25cm)
-        // spacing before = 0, after = 0
-        // spacing line   = 360 / auto = espaçamento 1,5
-        const ooxml = `<w:pPr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
-          <w:jc w:val="both"/>
-          <w:ind w:firstLine="709"/>
-          <w:spacing w:line="360" w:lineRule="auto" w:before="0" w:after="0"/>
-        </w:pPr>`;
-        p.insertOoxml(ooxml, 'Replace');
+        // 2) Aplica formatação via propriedades diretas
+        p.firstLineIndent = 35.4;   // 1,25cm em pontos (1pt = 0,03527cm)
+        p.lineSpacing     = 18;     // 1,5 × 12pt = 18pt
+        p.spaceBefore     = 0;
+        p.spaceAfter      = 0;
+        p.alignment       = 'Justified';
       }
 
       await ctx.sync();
@@ -522,47 +526,42 @@ async function formatParagraphs() {
 }
 
 // ============================================================
-// FORMAT QUOTES (ABNT style: 4cm from left, 1cm right if selection)
-// Here: 1cm left, 1cm right indent, single spacing
+// FORMAT QUOTES
+// Recuo 1cm esq/dir · Espaçamento simples · Justificado · Esp. antes/depois = 0
 // ============================================================
 async function formatQuotes() {
   try {
     await Word.run(async (ctx) => {
+      // Carrega seleção e seus parágrafos separadamente
       const sel = ctx.document.getSelection();
       sel.load('text');
-      const paras = sel.paragraphs;
-      paras.load('items');
       await ctx.sync();
 
-      if (!sel.text || !sel.text.trim()) {
+      if (!sel.text || sel.text.trim() === '') {
         showToast('Selecione o trecho de citação primeiro.', 'info');
         return;
       }
 
+      const paras = sel.paragraphs;
+      paras.load('items, text');
+      await ctx.sync();
+
       for (const p of paras.items) {
-        p.load('text');
-        await ctx.sync();
-
-        // Remove espaços duplos entre palavras e espaços no final de linha
-        const cleanText = p.text
-          .replace(/[ \t]+/g, ' ')
-          .replace(/[ \t]+$/gm, '')
-          .replace(/[ \t]+([\r\n])/g, '$1');
-
-        if (cleanText !== p.text) {
-          p.insertText(cleanText, 'Replace');
+        // 1) Limpa espaços extras
+        const clean = cleanParaText(p.text);
+        if (clean !== p.text) {
+          p.insertText(clean, 'Replace');
+          await ctx.sync();
         }
 
-        // OOXML:
-        // jc:both      = justificado
-        // ind left/right = 567 twips (1cm) cada lado, sem recuo de primeira linha
-        // spacing before = 0, after = 0, line = 240/auto = simples
-        const ooxml = `<w:pPr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
-          <w:jc w:val="both"/>
-          <w:ind w:left="567" w:right="567" w:firstLine="0"/>
-          <w:spacing w:line="240" w:lineRule="auto" w:before="0" w:after="0"/>
-        </w:pPr>`;
-        p.insertOoxml(ooxml, 'Replace');
+        // 2) Aplica formatação
+        p.leftIndent      = 28.35;  // 1cm em pontos
+        p.rightIndent     = 28.35;  // 1cm em pontos
+        p.firstLineIndent = 0;      // sem recuo na primeira linha
+        p.lineSpacing     = 12;     // espaçamento simples = tamanho da fonte
+        p.spaceBefore     = 0;
+        p.spaceAfter      = 0;
+        p.alignment       = 'Justified';
       }
 
       await ctx.sync();
@@ -586,7 +585,7 @@ async function applyFont() {
       showToast('✓ Fonte Helvetica Neue 12pt aplicada!', 'success');
     });
   } catch(e) {
-    showToast('Erro ao aplicar fonte: ' + e.message, 'error');
+    showToast('Erro fonte: ' + e.message, 'error');
   }
 }
 
@@ -597,39 +596,35 @@ async function formatAll() {
   try {
     await Word.run(async (ctx) => {
       const body = ctx.document.body;
+
+      // Fonte global
       body.font.name = 'Helvetica Neue';
       body.font.size = 12;
 
       const paras = body.paragraphs;
-      paras.load('items');
+      paras.load('items, text');
       await ctx.sync();
 
       for (const p of paras.items) {
-        p.load('text');
-        await ctx.sync();
-
-        const cleanText = p.text
-          .replace(/[ \t]+/g, ' ')
-          .replace(/[ \t]+$/gm, '')
-          .replace(/[ \t]+([\r\n])/g, '$1');
-
-        if (cleanText !== p.text) {
-          p.insertText(cleanText, 'Replace');
+        // Limpa espaços
+        const clean = cleanParaText(p.text);
+        if (clean !== p.text) {
+          p.insertText(clean, 'Replace');
+          await ctx.sync();
         }
 
-        const ooxml = `<w:pPr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
-          <w:jc w:val="both"/>
-          <w:ind w:firstLine="709"/>
-          <w:spacing w:line="360" w:lineRule="auto" w:before="0" w:after="0"/>
-        </w:pPr>`;
-        p.insertOoxml(ooxml, 'Replace');
+        p.firstLineIndent = 35.4;
+        p.lineSpacing     = 18;
+        p.spaceBefore     = 0;
+        p.spaceAfter      = 0;
+        p.alignment       = 'Justified';
       }
 
       await ctx.sync();
       showToast('✓ Formatação completa aplicada!', 'success');
     });
   } catch(e) {
-    showToast('Erro: ' + e.message, 'error');
+    showToast('Erro geral: ' + e.message, 'error');
   }
 }
 
