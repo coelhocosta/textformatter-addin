@@ -196,8 +196,8 @@ function doJust(){
 
 // ── MARCAR ESPAÇOS EXCEDENTES ──
 // Simula quebra de linha. Para cada linha não-final com espaço excedente,
-// busca os últimos caracteres da linha no parágrafo e insere ! vermelho
-// imediatamente APÓS o último caractere (último char da linha).
+// insere N ! vermelhos no final da linha (após o último caractere),
+// onde N = número de espaços que cabem no espaço restante.
 function doAnalyze(){
   Word.run(function(ctx){
     var sel = ctx.document.getSelection();
@@ -208,12 +208,13 @@ function doAnalyze(){
       return ctx.sync().then(function(){
         var marked = 0;
         var spaceW = mw(' ');
+        var bangW  = mw('!');
         var i = 0;
 
         function procPara(){
           if(i>=ps.items.length){
             return ctx.sync().then(function(){
-              log(marked>0 ? '✓ '+marked+' ! inserido(s) no final das linhas.' : '✓ Sem espaços excedentes.');
+              log(marked>0 ? '✓ Marcações inseridas em '+marked+' linha(s).' : '✓ Sem espaços excedentes.');
             });
           }
           var p = ps.items[i++];
@@ -223,7 +224,7 @@ function doAnalyze(){
 ]+/g,' ').replace(/ +/g,' ').trim();
             if(!text) return procPara();
 
-            // Simula quebra de linha
+            // Simula quebra de linha com canvas
             var words = text.split(' ').filter(Boolean);
             var lines = [], cur = '';
             for(var w=0;w<words.length;w++){
@@ -233,23 +234,26 @@ function doAnalyze(){
             }
             if(cur) lines.push(cur);
 
-            // Linhas com espaço excedente (não a última)
+            // Para cada linha não-final: calcula quantos ! cabem no espaço restante
             var toMark = [];
             for(var li=0;li<lines.length-1;li++){
               var rem = LINE_PT - mw(lines[li]);
-              if(rem >= spaceW*0.5) toMark.push(lines[li]);
+              if(rem >= bangW){
+                var count = Math.floor(rem / bangW);
+                toMark.push({ line: lines[li], count: count });
+              }
             }
             if(!toMark.length) return procPara();
 
-            // Para cada linha: usa os últimos 6 chars como âncora de busca
-            // e insere ! logo após eles
             var j = 0;
             function procLine(){
               if(j>=toMark.length) return procPara();
-              var line = toMark[j++];
+              var item  = toMark[j++];
+              var line  = item.line;
+              var count = item.count;
 
-              // Âncora: últimos 6 chars da linha (suficiente para ser único)
-              var anchor = line.slice(-6).trim();
+              // Âncora: últimos 8 chars da linha para localizar o fim
+              var anchor = line.slice(-8).trim();
               if(!anchor) return procLine();
 
               var res = p.search(anchor, {matchCase:false, matchWholeWord:false});
@@ -257,13 +261,14 @@ function doAnalyze(){
               return ctx.sync().then(function(){
                 if(!res.items.length) return procLine();
 
-                // Insere ! após o último match do anchor
+                // Insere os ! após o anchor (fim da linha)
+                var bangs = new Array(count+1).join('!');
                 var range = res.items[res.items.length-1];
-                range.insertText('!', 'After');
+                range.insertText(bangs, 'After');
                 return ctx.sync().then(function(){
 
-                  // Colore o ! recém inserido: busca anchor! e colore
-                  var bangSearch = p.search(anchor+'!', {matchCase:false, matchWholeWord:false});
+                  // Colore os ! em vermelho
+                  var bangSearch = p.search(anchor+bangs, {matchCase:false, matchWholeWord:false});
                   ctx.load(bangSearch,'items');
                   return ctx.sync().then(function(){
                     if(bangSearch.items.length){
