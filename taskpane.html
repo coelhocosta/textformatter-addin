@@ -1,622 +1,217 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TextFormatter Pro</title>
-  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
-  <style>
-    :root {
-      --bg: #0f0f13;
-      --surface: #1a1a22;
-      --surface2: #22222e;
-      --border: #2e2e3e;
-      --accent: #6c63ff;
-      --accent2: #ff6b6b;
-      --accent3: #43e97b;
-      --text: #e8e8f0;
-      --text-muted: #7a7a9a;
-      --font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font);
-      font-size: 13px;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* Header */
-    .header {
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-      padding: 16px 14px 12px;
-      border-bottom: 1px solid var(--border);
-      position: relative;
-      overflow: hidden;
-    }
-    .header::before {
-      content: '';
-      position: absolute;
-      top: -30px; right: -30px;
-      width: 100px; height: 100px;
-      background: radial-gradient(circle, rgba(108,99,255,0.3) 0%, transparent 70%);
-      border-radius: 50%;
-    }
-    .header h1 {
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      background: linear-gradient(90deg, #a78bfa, #60a5fa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .header p {
-      font-size: 10px;
-      color: var(--text-muted);
-      margin-top: 2px;
-      letter-spacing: 0.3px;
-    }
-
-    /* Sections */
-    .section {
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
-    }
-    .section-title {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .section-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    /* Buttons */
-    .btn {
-      width: 100%;
-      padding: 9px 12px;
-      border: none;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 6px;
-      position: relative;
-      overflow: hidden;
-    }
-    .btn::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: white;
-      opacity: 0;
-      transition: opacity 0.1s;
-    }
-    .btn:active::after { opacity: 0.08; }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #6c63ff, #5a52d5);
-      color: white;
-      box-shadow: 0 3px 12px rgba(108,99,255,0.35);
-    }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(108,99,255,0.45); }
-
-    .btn-secondary {
-      background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
-      color: white;
-      box-shadow: 0 3px 12px rgba(255,107,107,0.3);
-    }
-    .btn-secondary:hover { transform: translateY(-1px); }
-
-    .btn-success {
-      background: linear-gradient(135deg, #43e97b, #38d66e);
-      color: #0f0f13;
-      box-shadow: 0 3px 12px rgba(67,233,123,0.3);
-    }
-    .btn-success:hover { transform: translateY(-1px); }
-
-    .btn-ghost {
-      background: var(--surface2);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-ghost:hover { background: var(--border); }
-
-    .btn-icon { font-size: 14px; }
-
-    /* Synonym tool */
-    .synonym-input-wrap {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-    .input-field {
-      flex: 1;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 12px;
-      padding: 8px 10px;
-      outline: none;
-      transition: border-color 0.15s;
-      font-family: var(--font);
-    }
-    .input-field:focus { border-color: var(--accent); }
-    .input-field::placeholder { color: var(--text-muted); }
-
-    .btn-sm {
-      padding: 8px 12px;
-      font-size: 11px;
-      white-space: nowrap;
-      margin: 0;
-      width: auto;
-    }
-
-    /* Tags / Chips */
-    .tags-wrap {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      margin-top: 6px;
-      min-height: 28px;
-    }
-    .tag {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 3px 10px;
-      font-size: 11px;
-      cursor: pointer;
-      transition: all 0.15s;
-      color: var(--text);
-    }
-    .tag:hover {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: white;
-      transform: scale(1.04);
-    }
-    .tag.selected {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: white;
-    }
-
-    /* Line fill analyzer */
-    .analysis-box {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 12px;
-      margin-bottom: 8px;
-    }
-    .analysis-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-bottom: 4px;
-    }
-    .analysis-row strong { color: var(--text); font-weight: 600; }
-
-    .progress-bar {
-      height: 5px;
-      background: var(--border);
-      border-radius: 3px;
-      overflow: hidden;
-      margin-top: 6px;
-    }
-    .progress-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.4s ease;
-    }
-    .fill-good { background: var(--accent3); }
-    .fill-warn { background: #f59e0b; }
-    .fill-bad  { background: var(--accent2); }
-
-    /* Toasts / Status */
-    .toast {
-      position: fixed;
-      bottom: 16px; left: 50%;
-      transform: translateX(-50%) translateY(60px);
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 18px;
-      font-size: 12px;
-      z-index: 9999;
-      transition: transform 0.25s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      max-width: 240px;
-      text-align: center;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    }
-    .toast.show { transform: translateX(-50%) translateY(0); }
-    .toast.success { border-color: var(--accent3); }
-    .toast.error   { border-color: var(--accent2); }
-    .toast.info    { border-color: var(--accent); }
-
-    /* Spinner */
-    .spinner {
-      width: 14px; height: 14px;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: inline-block;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Loading overlay */
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
-    }
-
-    /* Info badge */
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: rgba(108,99,255,0.15);
-      border: 1px solid rgba(108,99,255,0.3);
-      border-radius: 6px;
-      padding: 3px 8px;
-      font-size: 10px;
-      color: #a78bfa;
-      margin-bottom: 8px;
-    }
-
-    /* Divider text */
-    .divider-or {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--text-muted);
-      font-size: 10px;
-      margin: 6px 0;
-    }
-    .divider-or::before, .divider-or::after {
-      content: ''; flex: 1;
-      height: 1px; background: var(--border);
-    }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-    /* Selection highlight */
-    .selected-word-label {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-    .selected-word-label span {
-      color: #a78bfa;
-      font-weight: 600;
-    }
-
-    .line-result {
-      font-size: 11px;
-      padding: 6px 10px;
-      border-radius: 8px;
-      background: var(--surface2);
-      margin-top: 6px;
-      border-left: 3px solid var(--accent3);
-      display: none;
-    }
-
-    .separator { height: 1px; background: var(--border); margin: 2px 0; }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TextFormatter Pro</title>
+<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+<style>
+:root {
+  --bg:#0f0f13; --surf:#1a1a22; --surf2:#22222e; --bord:#2e2e3e;
+  --acc:#6c63ff; --acc2:#ff6b6b; --acc3:#43e97b;
+  --txt:#e8e8f0; --muted:#7a7a9a;
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:var(--font);font-size:13px}
+.hdr{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);padding:14px;border-bottom:1px solid var(--bord)}
+.hdr h1{font-size:15px;font-weight:700;background:linear-gradient(90deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hdr p{font-size:10px;color:var(--muted);margin-top:2px}
+.sec{padding:10px 14px;border-bottom:1px solid var(--bord)}
+.sec-title{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--bord)}
+.btn{width:100%;padding:9px 12px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;margin-bottom:6px;transition:all .15s}
+.btn-p{background:linear-gradient(135deg,#6c63ff,#5a52d5);color:#fff;box-shadow:0 3px 12px rgba(108,99,255,.35)}
+.btn-p:hover{transform:translateY(-1px)}
+.btn-r{background:linear-gradient(135deg,#ff6b6b,#ee5a5a);color:#fff;box-shadow:0 3px 12px rgba(255,107,107,.3)}
+.btn-g{background:linear-gradient(135deg,#43e97b,#38d66e);color:#0f0f13;box-shadow:0 3px 12px rgba(67,233,123,.3)}
+.btn-o{background:var(--surf2);color:var(--txt);border:1px solid var(--bord)}
+.ifield{width:100%;background:var(--surf2);border:1px solid var(--bord);border-radius:8px;color:var(--txt);font-size:12px;padding:8px 10px;outline:none;margin-bottom:6px}
+.ifield:focus{border-color:var(--acc)}
+.row{display:flex;gap:6px;margin-bottom:6px}
+.row .ifield{margin-bottom:0}
+.btn-sm{width:auto;padding:8px 12px;margin:0;white-space:nowrap}
+.tags{display:flex;flex-wrap:wrap;gap:5px;min-height:24px;margin-top:4px}
+.tag{background:var(--surf2);border:1px solid var(--bord);border-radius:20px;padding:3px 10px;font-size:11px;cursor:pointer;transition:all .15s}
+.tag:hover,.tag.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--surf2);border:1px solid var(--bord);border-radius:10px;padding:9px 16px;font-size:12px;z-index:9999;transition:transform .25s;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:var(--acc3)} .toast.er{border-color:var(--acc2)} .toast.in{border-color:var(--acc)}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--bord);border-top-color:var(--acc);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.lbl{font-size:11px;color:var(--muted);margin-bottom:5px}
+.lbl span{color:#a78bfa;font-weight:600}
+</style>
 </head>
 <body>
 
-<div class="header">
+<div class="hdr">
   <h1>✦ TextFormatter Pro</h1>
-  <p>Formatação ABNT · Sinônimos · Alinhamento de Linhas</p>
+  <p>Formatação ABNT · Sinônimos · Word for Mac</p>
 </div>
 
-<!-- SECTION: Formatação -->
-<div class="section">
-  <div class="section-title">Formatação</div>
-
-  <div class="badge">⚡ Aplica na seleção ou documento inteiro</div>
-
-  <button class="btn btn-primary" onclick="formatParagraphs()">
-    <span class="btn-icon">¶</span>
-    Formatar Parágrafos (1,25cm · Esp. 1,5)
-  </button>
-
-  <button class="btn btn-secondary" onclick="formatQuotes()">
-    <span class="btn-icon">❝</span>
-    Formatar Citações (Recuo 1cm · Simples)
-  </button>
-
-  <button class="btn btn-ghost" onclick="applyFont()">
-    <span class="btn-icon">A</span>
-    Aplicar Helvetica Neue 12pt
-  </button>
-
-  <button class="btn btn-success" onclick="formatAll()">
-    <span class="btn-icon">✓</span>
-    Aplicar Tudo de Uma Vez
-  </button>
+<!-- FORMATAÇÃO -->
+<div class="sec">
+  <div class="sec-title">Formatação</div>
+  <button class="btn btn-p" onclick="runParagraphs()"><span>¶</span> Parágrafos (1,25cm · Esp. 1,5)</button>
+  <button class="btn btn-r" onclick="runQuotes()"><span>❝</span> Citações (Recuo 1cm · Simples)</button>
+  <button class="btn btn-o" onclick="runFont()"><span>A</span> Helvetica Neue 12pt</button>
+  <button class="btn btn-g" onclick="runAll()"><span>✓</span> Aplicar Tudo</button>
 </div>
 
-<!-- SECTION: Sinônimos -->
-<div class="section">
-  <div class="section-title">Sinônimos</div>
-
-  <div class="selected-word-label">
-    Palavra selecionada: <span id="selected-word-display">—</span>
+<!-- SINÔNIMOS -->
+<div class="sec">
+  <div class="sec-title">Sinônimos</div>
+  <div class="lbl">Palavra selecionada: <span id="selWord">—</span></div>
+  <div class="row">
+    <input class="ifield" id="synInput" placeholder="Digite ou selecione uma palavra..."/>
+    <button class="btn btn-p btn-sm" onclick="getSyn()">Buscar</button>
   </div>
-
-  <div class="synonym-input-wrap">
-    <input class="input-field" id="synonym-input" placeholder="Digite ou selecione uma palavra..." />
-    <button class="btn btn-primary btn-sm" onclick="getSynonyms()">Buscar</button>
-  </div>
-
-  <div id="synonym-loading" style="display:none; text-align:center; padding:8px;">
-    <span class="spinner"></span>
-    <span style="font-size:11px; color:var(--text-muted); margin-left:6px;">Buscando sinônimos...</span>
-  </div>
-
-  <div class="tags-wrap" id="synonym-tags">
-    <span style="color:var(--text-muted); font-size:11px;">Sinônimos aparecerão aqui...</span>
-  </div>
-
-  <div id="synonym-result" class="line-result"></div>
+  <div id="synLoad" style="display:none;font-size:11px;color:var(--muted);padding:4px 0"><span class="spin"></span> Buscando...</div>
+  <div class="tags" id="synTags"><span style="color:var(--muted);font-size:11px">Sinônimos aparecerão aqui...</span></div>
 </div>
 
-<!-- SECTION: Análise de Linha -->
-<div class="section">
-  <div class="section-title">Alinhamento de Linha</div>
-
-  <button class="btn btn-ghost" onclick="analyzeLine()" style="margin-bottom:8px;">
-    <span class="btn-icon">📐</span>
-    Analisar Linha Atual
-  </button>
-
-  <div class="analysis-box" id="analysis-box" style="display:none;">
-    <div class="analysis-row">
-      <span>Caracteres na linha:</span>
-      <strong id="char-count">—</strong>
-    </div>
-    <div class="analysis-row">
-      <span>Capacidade máxima:</span>
-      <strong>65 chars</strong>
-    </div>
-    <div class="analysis-row">
-      <span>Espaço restante:</span>
-      <strong id="char-remaining">—</strong>
-    </div>
-    <div class="progress-bar">
-      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
-    </div>
+<!-- SUBSTITUIR -->
+<div class="sec">
+  <div class="sec-title">Substituir</div>
+  <div class="row">
+    <input class="ifield" id="repOld" placeholder="Palavra original"/>
+    <input class="ifield" id="repNew" placeholder="Substituir por"/>
   </div>
-
-  <button class="btn btn-primary" onclick="suggestFill()" id="suggest-fill-btn" style="display:none;">
-    <span class="btn-icon">✦</span>
-    Sugerir Palavras para Preencher Linha
-  </button>
-
-  <div id="fill-suggestions" class="tags-wrap"></div>
-</div>
-
-<!-- SECTION: Substituir Palavra -->
-<div class="section">
-  <div class="section-title">Substituir no Texto</div>
-  <div class="synonym-input-wrap">
-    <input class="input-field" id="replace-original" placeholder="Palavra original" />
-    <input class="input-field" id="replace-new" placeholder="Substituir por" />
-  </div>
-  <button class="btn btn-ghost" onclick="replaceWord()">
-    <span class="btn-icon">↔</span>
-    Substituir Seleção / Ocorrência
-  </button>
+  <button class="btn btn-o" onclick="doReplace()"><span>↔</span> Substituir</button>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ============================================================
-// OFFICE INITIALIZATION
-// ============================================================
-Office.onReady(function(info) {
-  if (info.host === Office.HostType.Word) {
-    initAddin();
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+Office.onReady(function(info){
+  if(info.host === Office.HostType.Word){
+    setInterval(detectSelection, 2000);
   }
 });
 
-function initAddin() {
-  // Detect selected text periodically
-  setInterval(checkSelection, 1500);
-}
-
-let lastSelectedText = '';
-async function checkSelection() {
+async function detectSelection(){
   try {
-    await Word.run(async (ctx) => {
-      const sel = ctx.document.getSelection();
-      sel.load('text');
+    await Word.run(async ctx => {
+      const s = ctx.document.getSelection();
+      s.load('text');
       await ctx.sync();
-      const t = sel.text.trim();
-      if (t && t !== lastSelectedText && t.split(' ').length <= 4 && t.length < 60) {
-        lastSelectedText = t;
-        document.getElementById('selected-word-display').textContent = t;
-        document.getElementById('synonym-input').value = t;
+      const t = s.text.trim();
+      if(t && t.split(' ').length <= 5 && t.length < 80){
+        document.getElementById('selWord').textContent = t;
+        document.getElementById('synInput').value = t;
       }
     });
-  } catch(e) {}
+  } catch(e){}
 }
 
-// ============================================================
-// HELPERS
-// ============================================================
-
-// Limpa espaços duplos e tabulações no documento via search/replace seguro
-// NÃO usa insertText em parágrafos inteiros (corrompe o doc)
-async function cleanDocSpaces(ctx, scope) {
-  // Remove tabulações → espaço simples
-  try {
-    const tabs = scope.search('\t', { matchWildcards: false });
-    tabs.load('items');
-    await ctx.sync();
-    for (const r of tabs.items) r.insertText(' ', 'Replace');
-    await ctx.sync();
-  } catch(e) {}
-
-  // Remove espaços duplos repetindo até não restar nenhum
-  for (let i = 0; i < 5; i++) {
-    try {
-      const doubles = scope.search('  ', { matchWildcards: false });
-      doubles.load('items');
-      await ctx.sync();
-      if (!doubles.items.length) break;
-      for (const r of doubles.items) r.insertText(' ', 'Replace');
-      await ctx.sync();
-    } catch(e) { break; }
-  }
+// ─────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────
+let _tt;
+function toast(msg, type='in'){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  clearTimeout(_tt);
+  _tt = setTimeout(()=> el.classList.remove('show'), 3000);
 }
 
-// ============================================================
-// FORMAT PARAGRAPHS
-// Recuo 1,25cm · Espaçamento 1,5 · Justificado · Esp. antes/depois = 0
-// ============================================================
-async function formatParagraphs() {
+// ─────────────────────────────────────────────
+// APLICAR FONTE
+// ─────────────────────────────────────────────
+async function runFont(){
   try {
-    await Word.run(async (ctx) => {
-      // 1) Limpa tabs e espaços duplos de forma segura
-      await cleanDocSpaces(ctx, ctx.document.body);
-
-      // 2) Aplica formatação nos parágrafos
-      const paras = ctx.document.body.paragraphs;
-      paras.load('items');
+    await Word.run(async ctx => {
+      ctx.document.body.font.name = 'Helvetica Neue';
+      ctx.document.body.font.size = 12;
       await ctx.sync();
-
-      for (const p of paras.items) {
-        p.firstLineIndent = 35.4;   // 1,25cm
-        p.leftIndent      = 0;
-        p.rightIndent     = 0;
-        p.lineSpacing     = 18;     // 1,5x
-        p.spaceBefore     = 0;
-        p.spaceAfter      = 0;
-        p.alignment       = Word.Alignment.justified;
-      }
-
-      await ctx.sync();
-      showToast('✓ Parágrafos formatados!', 'success');
+      toast('✓ Fonte aplicada!', 'ok');
     });
-  } catch(e) {
-    showToast('Erro parágrafo: ' + e.message, 'error');
-  }
+  } catch(e){ toast('Erro fonte: ' + e.message, 'er'); }
 }
 
-// ============================================================
-// FORMAT QUOTES
-// Recuo 1cm esq/dir · Espaçamento simples · Justificado · Esp. antes/depois = 0
-// ============================================================
-async function formatQuotes() {
+// ─────────────────────────────────────────────
+// FORMATAR PARÁGRAFOS
+// Recuo 1ª linha 1,25cm · Esp. 1,5 · Justificado · Antes/Depois = 0
+// ─────────────────────────────────────────────
+async function runParagraphs(){
   try {
-    await Word.run(async (ctx) => {
-      const sel = ctx.document.getSelection();
-      sel.load('text');
-      await ctx.sync();
-
-      if (!sel.text || sel.text.trim() === '') {
-        showToast('Selecione o trecho de citação primeiro.', 'info');
-        return;
-      }
-
-      // 1) Limpa tabs e espaços duplos na seleção
-      await cleanDocSpaces(ctx, sel);
-
-      // 2) Recarrega parágrafos após limpeza
-      const paras = sel.paragraphs;
-      paras.load('items');
-      await ctx.sync();
-
-      for (const p of paras.items) {
-        p.firstLineIndent = 0;       // sem recuo — texto começa à esquerda do recuo
-        p.leftIndent      = 28.35;   // 1cm
-        p.rightIndent     = 28.35;   // 1cm
-        p.lineSpacing     = 12;      // simples
-        p.spaceBefore     = 0;
-        p.spaceAfter      = 0;
-        p.alignment       = Word.Alignment.justified;
-      }
-
-      await ctx.sync();
-      showToast('✓ Citação formatada!', 'success');
-    });
-  } catch(e) {
-    showToast('Erro citação: ' + e.message, 'error');
-  }
-}
-
-// ============================================================
-// APPLY FONT: Helvetica Neue 12pt
-// ============================================================
-async function applyFont() {
-  try {
-    await Word.run(async (ctx) => {
+    await Word.run(async ctx => {
       const body = ctx.document.body;
-      body.font.name = 'Helvetica Neue';
-      body.font.size = 12;
-      await ctx.sync();
-      showToast('✓ Fonte Helvetica Neue 12pt aplicada!', 'success');
-    });
-  } catch(e) {
-    showToast('Erro fonte: ' + e.message, 'error');
-  }
-}
-
-// ============================================================
-// FORMAT ALL AT ONCE
-// ============================================================
-async function formatAll() {
-  try {
-    await Word.run(async (ctx) => {
-      const body = ctx.document.body;
-
-      // 1) Fonte global
-      body.font.name = 'Helvetica Neue';
-      body.font.size = 12;
-
-      // 2) Limpa tabs e espaços duplos
-      await cleanDocSpaces(ctx, body);
-
-      // 3) Formata parágrafos
       const paras = body.paragraphs;
       paras.load('items');
       await ctx.sync();
 
-      for (const p of paras.items) {
-        p.firstLineIndent = 35.4;
+      for(const p of paras.items){
+        p.firstLineIndent = 35.43;   // 1,25 cm → pontos (1cm = 28.35pt)
+        p.leftIndent      = 0;
+        p.rightIndent     = 0;
+        p.lineSpacing     = 18;      // 1,5 × 12pt
+        p.spaceBefore     = 0;
+        p.spaceAfter      = 0;
+        p.alignment       = Word.Alignment.justified;
+      }
+      await ctx.sync();
+      toast('✓ Parágrafos formatados!', 'ok');
+    });
+  } catch(e){ toast('Erro parágrafo: ' + e.message, 'er'); }
+}
+
+// ─────────────────────────────────────────────
+// FORMATAR CITAÇÕES
+// Recuo esq/dir 1cm · Esp. Simples · Justificado · Sem recuo 1ª linha
+// ─────────────────────────────────────────────
+async function runQuotes(){
+  try {
+    await Word.run(async ctx => {
+      const sel = ctx.document.getSelection();
+      sel.load('text');
+      await ctx.sync();
+
+      if(!sel.text || !sel.text.trim()){
+        toast('Selecione o texto da citação primeiro.', 'in');
+        return;
+      }
+
+      const paras = sel.paragraphs;
+      paras.load('items');
+      await ctx.sync();
+
+      for(const p of paras.items){
+        p.firstLineIndent = 0;
+        p.leftIndent      = 28.35;   // 1 cm
+        p.rightIndent     = 28.35;   // 1 cm
+        p.lineSpacing     = 12;      // simples = 1 × 12pt
+        p.spaceBefore     = 0;
+        p.spaceAfter      = 0;
+        p.alignment       = Word.Alignment.justified;
+      }
+      await ctx.sync();
+      toast('✓ Citação formatada!', 'ok');
+    });
+  } catch(e){ toast('Erro citação: ' + e.message, 'er'); }
+}
+
+// ─────────────────────────────────────────────
+// APLICAR TUDO
+// ─────────────────────────────────────────────
+async function runAll(){
+  try {
+    await Word.run(async ctx => {
+      const body = ctx.document.body;
+      body.font.name = 'Helvetica Neue';
+      body.font.size = 12;
+
+      const paras = body.paragraphs;
+      paras.load('items');
+      await ctx.sync();
+
+      for(const p of paras.items){
+        p.firstLineIndent = 35.43;
         p.leftIndent      = 0;
         p.rightIndent     = 0;
         p.lineSpacing     = 18;
@@ -624,278 +219,110 @@ async function formatAll() {
         p.spaceAfter      = 0;
         p.alignment       = Word.Alignment.justified;
       }
-
       await ctx.sync();
-      showToast('✓ Formatação completa aplicada!', 'success');
+      toast('✓ Tudo aplicado!', 'ok');
     });
-  } catch(e) {
-    showToast('Erro geral: ' + e.message, 'error');
-  }
+  } catch(e){ toast('Erro: ' + e.message, 'er'); }
 }
 
-// ============================================================
-// SYNONYM SEARCH (via Claude API in artifact)
-// ============================================================
-async function getSynonyms() {
-  const word = document.getElementById('synonym-input').value.trim();
-  if (!word) { showToast('Digite uma palavra.', 'info'); return; }
+// ─────────────────────────────────────────────
+// SINÔNIMOS
+// ─────────────────────────────────────────────
+async function getSyn(){
+  const word = document.getElementById('synInput').value.trim();
+  if(!word){ toast('Digite uma palavra.','in'); return; }
 
-  document.getElementById('synonym-loading').style.display = 'block';
-  document.getElementById('synonym-tags').innerHTML = '';
+  document.getElementById('synLoad').style.display = 'block';
+  document.getElementById('synTags').innerHTML = '';
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 300,
-        system: 'Você é um especialista em língua portuguesa. Responda APENAS com JSON puro sem markdown, no formato: {"sinonimos": ["palavra1","palavra2",...]} — liste 8 a 12 sinônimos em português da palavra solicitada.',
-        messages: [{ role: 'user', content: `Sinônimos de: "${word}"` }]
+        model:'claude-sonnet-4-20250514',
+        max_tokens:300,
+        system:'Responda APENAS com JSON puro sem markdown: {"s":["sin1","sin2",...]} com 8 a 12 sinônimos em português.',
+        messages:[{role:'user',content:'Sinônimos de: '+word}]
       })
     });
-
-    const data = await response.json();
-    const text = data.content.map(i => i.text || '').join('');
-    const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
-    renderSynonyms(parsed.sinonimos || [], word);
-
-  } catch(e) {
-    // Fallback: static synonyms for demo
-    const fallback = getSynonymsFallback(word);
-    renderSynonyms(fallback, word);
+    const d = await res.json();
+    const txt = d.content.map(i=>i.text||'').join('');
+    const obj = JSON.parse(txt.replace(/```json|```/g,'').trim());
+    renderSyn(obj.s||[], word);
+  } catch(e){
+    renderSyn(fallbackSyn(word), word);
   } finally {
-    document.getElementById('synonym-loading').style.display = 'none';
+    document.getElementById('synLoad').style.display = 'none';
   }
 }
 
-function getSynonymsFallback(word) {
-  const map = {
-    'bom': ['ótimo','excelente','admirável','superior','notável','distinto','primoroso'],
-    'ruim': ['péssimo','terrível','horrível','inferior','precário','deficiente'],
-    'grande': ['enorme','vasto','amplo','colossal','extenso','imponente','majestoso'],
-    'pequeno': ['diminuto','minúsculo','ínfimo','reduzido','exíguo','modesto'],
-    'importante': ['essencial','fundamental','crucial','relevante','significativo','primordial'],
-    'fazer': ['executar','realizar','efetuar','produzir','elaborar','concretizar'],
-    'dizer': ['afirmar','declarar','asseverar','enunciar','expressar','proferir'],
-    'ver': ['observar','contemplar','examinar','visualizar','perceber','notar'],
+function fallbackSyn(w){
+  const m={
+    'bom':['ótimo','excelente','admirável','primoroso','notável','superior'],
+    'ruim':['péssimo','terrível','deficiente','precário','inferior'],
+    'grande':['enorme','vasto','amplo','colossal','extenso','majestoso'],
+    'pequeno':['diminuto','minúsculo','ínfimo','reduzido','exíguo'],
+    'importante':['essencial','fundamental','crucial','relevante','primordial'],
   };
-  const w = word.toLowerCase();
-  return map[w] || ['similar','análogo','equivalente','correspondente','afim','correlato','semelhante'];
+  return m[w.toLowerCase()]||['similar','análogo','equivalente','correlato','afim','semelhante'];
 }
 
-function renderSynonyms(syns, original) {
-  const wrap = document.getElementById('synonym-tags');
+function renderSyn(list, original){
+  const wrap = document.getElementById('synTags');
   wrap.innerHTML = '';
-  syns.forEach(s => {
-    const tag = document.createElement('span');
-    tag.className = 'tag';
-    tag.textContent = s;
-    tag.onclick = () => insertSynonym(s, original, tag);
-    wrap.appendChild(tag);
-  });
-}
-
-async function insertSynonym(synonym, original, tagEl) {
-  // Highlight selected tag
-  document.querySelectorAll('.tag').forEach(t => t.classList.remove('selected'));
-  tagEl.classList.add('selected');
-
-  try {
-    await Word.run(async (ctx) => {
-      const sel = ctx.document.getSelection();
-      sel.load('text');
-      await ctx.sync();
-
-      if (sel.text.trim().toLowerCase() === original.toLowerCase()) {
-        // Replace selection
-        sel.insertText(synonym, Word.InsertLocation.replace);
-      } else {
-        // Find & replace first occurrence
-        const results = ctx.document.body.search(original, { matchCase: false, matchWholeWord: true });
-        results.load('items');
-        await ctx.sync();
-        if (results.items.length > 0) {
-          results.items[0].insertText(synonym, Word.InsertLocation.replace);
-        }
-      }
-      await ctx.sync();
-      showToast(`✓ "${original}" → "${synonym}"`, 'success');
-    });
-  } catch(e) {
-    showToast('Selecione a palavra no texto primeiro.', 'info');
-  }
-}
-
-// ============================================================
-// LINE ANALYSIS
-// 65 chars per line with Helvetica Neue 12pt
-// ============================================================
-async function analyzeLine() {
-  try {
-    await Word.run(async (ctx) => {
-      const sel = ctx.document.getSelection();
-      sel.load('text,paragraphs');
-      await ctx.sync();
-
-      let lineText = sel.text.trim();
-      if (!lineText) {
-        // Try to get current paragraph
-        const para = ctx.document.getSelection().paragraphs.getFirst();
-        para.load('text');
-        await ctx.sync();
-        lineText = para.text.trim();
-      }
-
-      // Find the last line of the text (approximate)
-      const lines = lineText.split('\n');
-      const lastLine = lines[lines.length - 1];
-      const charCount = lastLine.length;
-      const maxChars = 65;
-      const remaining = maxChars - charCount;
-      const pct = Math.min(100, (charCount / maxChars) * 100);
-
-      // Update UI
-      document.getElementById('char-count').textContent = charCount;
-      document.getElementById('char-remaining').textContent =
-        remaining >= 0 ? `${remaining} chars livres` : `${Math.abs(remaining)} chars excedidos`;
-
-      const fill = document.getElementById('progress-fill');
-      fill.style.width = pct + '%';
-      fill.className = 'progress-fill ' + (pct > 95 ? 'fill-bad' : pct > 75 ? 'fill-warn' : 'fill-good');
-
-      document.getElementById('analysis-box').style.display = 'block';
-
-      if (remaining > 2 && remaining < 30) {
-        document.getElementById('suggest-fill-btn').style.display = 'flex';
-        document.getElementById('suggest-fill-btn').dataset.remaining = remaining;
-        document.getElementById('suggest-fill-btn').dataset.text = lineText;
-      } else {
-        document.getElementById('suggest-fill-btn').style.display = 'none';
-        if (remaining <= 0) showToast('Linha está completa ou excedida.', 'info');
-        else if (remaining >= 30) showToast('Muitos espaços — reformule a frase.', 'info');
-      }
-    });
-  } catch(e) {
-    showToast('Selecione um parágrafo para analisar.', 'info');
-  }
-}
-
-// ============================================================
-// SUGGEST FILL WORDS (Claude API)
-// ============================================================
-async function suggestFill() {
-  const btn = document.getElementById('suggest-fill-btn');
-  const remaining = parseInt(btn.dataset.remaining || 0);
-  const text = btn.dataset.text || '';
-
-  if (!remaining || !text) { showToast('Analise uma linha primeiro.', 'info'); return; }
-
-  document.getElementById('fill-suggestions').innerHTML = '<span class="spinner"></span>';
-
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 500,
-        system: `Você é especialista em revisão de textos acadêmicos em português. Responda APENAS com JSON puro sem markdown, no formato: {"sugestoes":[{"original":"palavra","substituta":"sinonimo_mais_longo","ganho":N}]} — ganho é quantos caracteres a mais tem a substituta. O usuário quer preencher ${remaining} caracteres a mais numa linha com 65 caracteres. Liste 5 substituições de palavras do texto que, trocadas por sinônimos mais longos, ajudem a completar a linha. Priorize palavras cujos sinônimos tenham exatamente ${remaining} caracteres a mais ou próximo disso.`,
-        messages: [{ role: 'user', content: `Texto: "${text}"` }]
-      })
-    });
-
-    const data = await response.json();
-    const rawText = data.content.map(i => i.text || '').join('');
-    const parsed = JSON.parse(rawText.replace(/```json|```/g, '').trim());
-    renderFillSuggestions(parsed.sugestoes || []);
-
-  } catch(e) {
-    // Fallback
-    renderFillSuggestions([
-      { original: '(análise manual)', substituta: 'tente sinônimos mais longos', ganho: 10 }
-    ]);
-  }
-}
-
-function renderFillSuggestions(sugestoes) {
-  const wrap = document.getElementById('fill-suggestions');
-  wrap.innerHTML = '';
-
-  if (!sugestoes.length) {
-    wrap.innerHTML = '<span style="color:var(--text-muted);font-size:11px;">Nenhuma sugestão encontrada.</span>';
+  if(!list.length){
+    wrap.innerHTML='<span style="color:var(--muted);font-size:11px">Nenhum resultado.</span>';
     return;
   }
-
-  sugestoes.forEach(s => {
-    const tag = document.createElement('span');
-    tag.className = 'tag';
-    tag.innerHTML = `<span style="color:#a78bfa">${s.original}</span> → ${s.substituta} <span style="color:var(--accent3);font-size:10px">(+${s.ganho})</span>`;
-    tag.style.fontSize = '11px';
-    tag.style.padding = '4px 10px';
-    tag.onclick = async () => {
-      try {
-        await Word.run(async (ctx) => {
-          const results = ctx.document.body.search(s.original, { matchCase: false, matchWholeWord: true });
-          results.load('items');
-          await ctx.sync();
-          if (results.items.length > 0) {
-            results.items[0].insertText(s.substituta, Word.InsertLocation.replace);
-          }
-          await ctx.sync();
-          showToast(`✓ Substituído: "${s.original}" → "${s.substituta}"`, 'success');
-        });
-      } catch(e) {}
-    };
-    wrap.appendChild(tag);
+  list.forEach(s=>{
+    const t = document.createElement('span');
+    t.className='tag'; t.textContent=s;
+    t.onclick=()=> insertSyn(s, original, t);
+    wrap.appendChild(t);
   });
 }
 
-// ============================================================
-// REPLACE WORD
-// ============================================================
-async function replaceWord() {
-  const original = document.getElementById('replace-original').value.trim();
-  const replacement = document.getElementById('replace-new').value.trim();
-  if (!original || !replacement) { showToast('Preencha os dois campos.', 'info'); return; }
-
+async function insertSyn(syn, original, el){
+  document.querySelectorAll('.tag').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
   try {
-    await Word.run(async (ctx) => {
+    await Word.run(async ctx=>{
       const sel = ctx.document.getSelection();
       sel.load('text');
       await ctx.sync();
-
-      if (sel.text.toLowerCase().includes(original.toLowerCase())) {
-        const newText = sel.text.replace(new RegExp(original, 'gi'), replacement);
-        sel.insertText(newText, Word.InsertLocation.replace);
+      if(sel.text.trim().toLowerCase()===original.toLowerCase()){
+        sel.insertText(syn, Word.InsertLocation.replace);
       } else {
-        const results = ctx.document.body.search(original, { matchCase: false, matchWholeWord: true });
-        results.load('items');
+        const r = ctx.document.body.search(original,{matchCase:false,matchWholeWord:true});
+        r.load('items');
         await ctx.sync();
-        if (results.items.length > 0) {
-          results.items[0].insertText(replacement, Word.InsertLocation.replace);
-          showToast(`✓ 1 ocorrência substituída.`, 'success');
-        } else {
-          showToast('Palavra não encontrada no texto.', 'error');
-        }
+        if(r.items.length) r.items[0].insertText(syn, Word.InsertLocation.replace);
       }
       await ctx.sync();
+      toast('✓ '+original+' → '+syn,'ok');
     });
-  } catch(e) {
-    showToast('Erro ao substituir: ' + e.message, 'error');
-  }
+  } catch(e){ toast('Selecione a palavra no texto.','in'); }
 }
 
-// ============================================================
-// TOAST
-// ============================================================
-let toastTimer;
-function showToast(msg, type = 'info') {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = `toast ${type} show`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+// ─────────────────────────────────────────────
+// SUBSTITUIR
+// ─────────────────────────────────────────────
+async function doReplace(){
+  const orig = document.getElementById('repOld').value.trim();
+  const sub  = document.getElementById('repNew').value.trim();
+  if(!orig||!sub){ toast('Preencha os dois campos.','in'); return; }
+  try {
+    await Word.run(async ctx=>{
+      const r = ctx.document.body.search(orig,{matchCase:false,matchWholeWord:true});
+      r.load('items');
+      await ctx.sync();
+      if(!r.items.length){ toast('Palavra não encontrada.','er'); return; }
+      r.items[0].insertText(sub, Word.InsertLocation.replace);
+      await ctx.sync();
+      toast('✓ Substituído!','ok');
+    });
+  } catch(e){ toast('Erro: '+e.message,'er'); }
 }
 </script>
 </body>
